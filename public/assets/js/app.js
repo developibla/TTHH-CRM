@@ -52,6 +52,75 @@
     );
   }
 
+  // ===== Sidebar collapse / overlay =====
+  function initSidebar() {
+    const body = document.body;
+    const btn = document.querySelector("[data-toggle-sidebar]");
+    const overlay = document.querySelector("[data-sidebar-overlay]");
+    const closeBtn = document.querySelector("[data-close-sidebar]"); // opcional
+
+    if (!btn) return;
+
+    const KEY = "tthh_sidebar_collapsed";
+
+    function setCollapsed(on) {
+      body.classList.toggle("sidebar-collapsed", !!on);
+      try { localStorage.setItem(KEY, on ? "1" : "0"); } catch (_) {}
+    }
+
+    function isMobile() {
+      return window.matchMedia("(max-width: 980px)").matches;
+    }
+
+    function openMobileSidebar() {
+      body.classList.add("sidebar-open");
+    }
+
+    function closeMobileSidebar() {
+      body.classList.remove("sidebar-open");
+    }
+
+    // cargar estado guardado (solo desktop)
+    try {
+      const saved = localStorage.getItem(KEY);
+      if (saved === "1") setCollapsed(true);
+    } catch (_) {}
+
+    // click botón toggle
+    btn.addEventListener("click", function () {
+      if (isMobile()) {
+        // mobile: overlay drawer
+        if (body.classList.contains("sidebar-open")) closeMobileSidebar();
+        else openMobileSidebar();
+        return;
+      }
+      // desktop: collapse
+      setCollapsed(!body.classList.contains("sidebar-collapsed"));
+    });
+
+    // overlay click (mobile)
+    if (overlay) {
+      overlay.addEventListener("click", closeMobileSidebar);
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeMobileSidebar);
+    }
+
+    // ESC cierra sidebar en mobile
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") {
+        if (body.classList.contains("sidebar-open")) closeMobileSidebar();
+      }
+    });
+
+    // cuando se agranda de mobile -> desktop, limpiar modo open
+    window.addEventListener("resize", function () {
+      if (!isMobile()) {
+        body.classList.remove("sidebar-open");
+      }
+    });
+  }
+
   // ===== Confirm modal (for delete) =====
   function initConfirmModal() {
     const modal = document.getElementById("confirmModal");
@@ -145,7 +214,7 @@
       if (activoSel) activoSel.value = String(rowObj.Activo ?? 1);
     }
 
-    // ---- open: new
+    // open new
     if (btnAdd) {
       btnAdd.addEventListener("click", function () {
         setFormNew();
@@ -156,7 +225,7 @@
       });
     }
 
-    // ---- open: edit
+    // open edit
     document.addEventListener("click", function (ev) {
       const btn = ev.target.closest("[data-cat-edit]");
       if (!btn) return;
@@ -176,7 +245,7 @@
       if (f && typeof f.select === "function") setTimeout(() => f.select(), 90);
     });
 
-    // ---- close modal
+    // close modal
     function doClose() { closeModal(modal); }
     if (btnClose) btnClose.addEventListener("click", doClose);
     if (btnCancel) btnCancel.addEventListener("click", doClose);
@@ -186,7 +255,7 @@
       if (ev.key === "Escape" && modal.classList.contains("is-open")) doClose();
     });
 
-    // ---- AJAX SAVE
+    // AJAX SAVE
     form.addEventListener("submit", async function (ev) {
       ev.preventDefault();
 
@@ -215,25 +284,19 @@
           return;
         }
 
-        // update existing row
         const tr = document.querySelector(`tr[data-row-id="${id}"]`);
         if (tr) {
           Object.keys(row).forEach((k) => {
             const td = tr.querySelector(`[data-col="${k}"]`);
             if (td) {
-              if (k === "Activo") {
-                td.textContent = String(row[k]) === "1" ? "Sí" : "No";
-              } else {
-                td.textContent = row[k] ?? "";
-              }
+              if (k === "Activo") td.textContent = String(row[k]) === "1" ? "Sí" : "No";
+              else td.textContent = row[k] ?? "";
             }
           });
 
           const editBtn = tr.querySelector("[data-cat-edit]");
           if (editBtn) editBtn.setAttribute("data-row", JSON.stringify(row));
-
         } else {
-          // insert new row at top
           const tbody = document.querySelector("table.table tbody");
           if (tbody) {
             const emptyRow = tbody.querySelector("tr td[colspan]");
@@ -288,7 +351,7 @@
       }
     });
 
-    // ---- AJAX DELETE (intercept forms)
+    // AJAX DELETE
     document.addEventListener("submit", async function (ev) {
       const delForm = ev.target.closest("form.js-del-form");
       if (!delForm) return;
@@ -324,13 +387,11 @@
           return;
         }
 
-        // remover fila
         const tr = document.querySelector(`tr[data-row-id="${delId}"]`);
         if (tr) tr.remove();
 
         toast(data.message || "Eliminado correctamente.", "ok");
 
-        // si quedó vacío, mostrar mensaje "Sin registros."
         const tbody = document.querySelector("table.table tbody");
         if (tbody && tbody.querySelectorAll("tr").length === 0) {
           tbody.innerHTML = `<tr><td colspan="99" style="padding:12px;color:var(--muted);">Sin registros.</td></tr>`;
@@ -340,7 +401,6 @@
       }
     });
 
-    // helpers
     function escapeHtml(s) {
       return String(s)
         .replaceAll("&", "&amp;")
@@ -370,6 +430,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     initUppercase(document);
+    initSidebar();
     initCatalogosModal();
   });
 })();

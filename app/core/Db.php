@@ -44,4 +44,5 @@ final class DB {
   public static function lastId(): string {
     return self::pdo()->lastInsertId();
   }
+  
 }
