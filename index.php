@@ -1,40 +1,16 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/app/config/bootstrap.php';
+session_start();
 
-$route = $_GET['r'] ?? 'home';
+$cfg = require __DIR__ . '/app/config/config.php';
+date_default_timezone_set($cfg['timezone']);
 
-switch ($route) {
+require __DIR__ . '/app/core/DB.php';
+require __DIR__ . '/app/core/Helpers.php';
+require __DIR__ . '/app/core/Csrf.php';
+require __DIR__ . '/app/core/View.php';
+require __DIR__ . '/app/core/Auth.php';
+require __DIR__ . '/app/core/Router.php';
 
-  case 'login':
-    require __DIR__ . '/views/auth/login.php';
-    break;
-
-  case 'login_post':
-    require __DIR__ . '/views/auth/login_post.php';
-    break;
-
-  case 'logout':
-    require __DIR__ . '/views/auth/logout.php';
-    break;
-
-  case 'home':
-    require_login();
-    require __DIR__ . '/views/home.php';
-    break;
-
-  case 'empresa':
-    require_role(['ADMIN']);
-    require __DIR__ . '/views/admin/empresa.php';
-    break;
-
-  case 'empresa_post':
-    require_role(['ADMIN']);
-    require __DIR__ . '/views/admin/empresa_post.php';
-    break;
-
-  default:
-    http_response_code(404);
-    echo "Ruta no encontrada.";
-}
+Router::dispatch();

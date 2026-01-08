@@ -10,4 +10,5 @@ session_start();
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/../lib/helpers.php';
+require_once __DIR__ . '/../lib/catalogos.php';
 require_once __DIR__ . '/../middleware/auth.php';
