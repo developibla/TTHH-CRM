@@ -6,6 +6,7 @@ declare(strict_types=1);
   </div>
 </div> <!-- .container -->
 
+<script src="public/assets/js/ui.js"></script>
 <script src="public/assets/js/app.js"></script>
 </body>
 </html>

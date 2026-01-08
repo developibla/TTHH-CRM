@@ -12,6 +12,7 @@ $cp = company_params();
   <title><?= e($cp['empresa'] ?? 'TTHH') ?></title>
 
   <link rel="stylesheet" href="public/assets/css/app.css">
+  <link rel="stylesheet" href="public/assets/css/ui.css">
 </head>
 <body>
 
@@ -68,7 +69,6 @@ $cp = company_params();
         </button>
       </div>
 
-      <!-- Aquí va tu menú accordion actual -->
       <?php require __DIR__ . '/sidebar.php'; ?>
     </aside>
 

@@ -1,0 +1,160 @@
+/* ==========================================================
+   UI GLOBAL PRO (MODALES + TOAST + TABLAS + ACCIONES + HELPERS)
+   Usar en todos los formularios/pantallas del sistema
+   ========================================================== */
+
+/* ===== PAGE HELPERS ===== */
+.page-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.page-head h2{ margin:0; }
+
+.tools{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+/* Bloque de filtros (buscar + botones) */
+.page-tools{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+/* ===== TOAST ===== */
+#toast{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  background: #fff;
+  font-size: 13px;
+  transform: translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: .2s;
+  z-index: 10000;
+}
+#toast.show{ opacity:1; transform: translateY(0); }
+#toast.ok{ border-color: rgba(17,138,85,.35); }
+#toast.err{ border-color: rgba(220,53,69,.35); }
+
+/* ===== MODAL ===== */
+.modal{ position:fixed; inset:0; display:none; z-index:9999; }
+.modal.is-open{ display:block; }
+.modal-overlay{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
+
+.modal-dialog{
+  position:relative;
+  width:min(720px, 94vw);
+  margin:7vh auto;
+  background:rgba(255,255,255,.98);
+  border-radius:16px;
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.65);
+  overflow:hidden;
+}
+.modal-dialog.sm{
+  width:min(460px, 92vw);
+  margin: 18vh auto;
+}
+
+.modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(17,138,85,.08), rgba(255,255,255,0));
+}
+.modal-title{
+  font-weight:950;
+  margin:0;
+  font-size:15px;
+}
+.modal-sub{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:2px;
+}
+.modal-body{ padding:14px 16px; }
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  background:rgba(15,42,28,.02);
+}
+
+body.modal-open{ overflow:hidden; }
+
+/* ===== TABLE ACTIONS ===== */
+.table-actions{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  justify-content:flex-start;
+}
+
+/* Icon-only pequeño para grillas */
+.btn-ico-sm{
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+/* Tabla compacta (opt-in: class="table compact") */
+.table.compact th,
+.table.compact td{
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+.table.compact th{
+  font-size: 11.5px;
+}
+
+/* Columna acciones compacta */
+th.col-actions{ width: 96px; }
+td.col-actions{ white-space:nowrap; }
+
+/* ===== ELIMINAR ELEGANTE (gris -> rojo solo hover) ===== */
+/* Nota: aplica tanto a botones como links con clase btn-danger */
+.btn-danger{
+  background: rgba(15, 23, 42, .06) !important;     /* gris suave */
+  border: 1px solid rgba(15, 23, 42, .14) !important;
+  color: rgba(15, 23, 42, .70) !important;
+}
+.btn-danger:hover,
+.btn-danger:focus{
+  background: rgba(220, 53, 69, .10) !important;    /* rojo suave */
+  border-color: rgba(220, 53, 69, .35) !important;
+  color: rgba(220, 53, 69, .95) !important;
+}
+.btn-danger:active{ background: rgba(220, 53, 69, .16) !important; }
+.btn-danger svg{ color: currentColor; }
+
+/* Links botón */
+a.btn{ text-decoration:none; }
+
+/* ===== PEQUEÑAS MEJORAS RESPONSIVE ===== */
+@media (max-width: 520px){
+  .modal-dialog{ margin: 10vh auto; }
+  .modal-actions{ gap:8px; }
+  .page-tools input.input{ min-width: 160px !important; }
+}
