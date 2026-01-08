@@ -13,5 +13,7 @@ require __DIR__ . '/app/core/View.php';
 require __DIR__ . '/app/core/Auth.php';
 require __DIR__ . '/app/core/Catalogos.php';
 require __DIR__ . '/app/core/Router.php';
+require __DIR__ . '/app/core/ImportGeo.php';
+
 
 Router::dispatch();

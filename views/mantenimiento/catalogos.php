@@ -17,6 +17,10 @@ require __DIR__ . '/../partials/layout_top.php';
 function json_attr(array $arr): string {
   return htmlspecialchars(json_encode($arr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8');
 }
+
+// pk manual?
+$manualPk = (bool)($cat['manual_pk'] ?? false);
+$pkName   = (string)($cat['pk'] ?? 'id');
 ?>
 
 <div id="toast"></div>
@@ -26,7 +30,7 @@ function json_attr(array $arr): string {
     <div>
       <h2>Catálogos referenciales</h2>
       <div style="color:var(--muted);font-size:13px;margin-top:4px;">
-        Administrar: Cargos, Áreas, Sectores, Tipos y Turnos.
+        Administrar: Cargos, Áreas, Sectores, Tipos, Turnos y otros referenciales.
       </div>
     </div>
 
@@ -46,7 +50,7 @@ function json_attr(array $arr): string {
   <?php if ($ok): ?><div class="alert alert-ok" style="margin-top:12px;"><?= e($ok) ?></div><?php endif; ?>
   <?php if ($err): ?><div class="alert alert-error" style="margin-top:12px;"><?= e($err) ?></div><?php endif; ?>
 
-  <div class="page-tools">
+  <div class="page-tools" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;">
     <form method="get" action="index.php" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <input type="hidden" name="r" value="catalogos">
       <input type="hidden" name="t" value="<?= e($key) ?>">
@@ -93,7 +97,13 @@ function json_attr(array $arr): string {
 
         <?php foreach ($items as $row): ?>
           <?php
-            $rowObj = ['id' => (int)$row[$cat['pk']], 'Activo' => (int)($row['Activo'] ?? 1)];
+            $rowObj = [
+              'id' => (int)$row[$cat['pk']],
+              // Para catálogos con PK manual, guardamos también pkName => id
+              $pkName => (int)$row[$cat['pk']],
+              'Activo' => (int)($row['Activo'] ?? 1)
+            ];
+
             foreach (array_keys($cat['fields']) as $f) {
               $v = (string)($row[$f] ?? '');
               if (($cat['fields'][$f]['type'] ?? '') === 'time' && strlen($v) >= 5) $v = substr($v, 0, 5);
@@ -168,6 +178,22 @@ function json_attr(array $arr): string {
         <input type="hidden" name="t" value="<?= e($key) ?>">
         <input type="hidden" name="id" value="">
         <input type="hidden" name="_ajax" value="1">
+
+        <?php if ($manualPk): ?>
+          <label class="label">Código (<?= e($pkName) ?>)</label>
+          <input class="input"
+                 type="number"
+                 name="<?= e($pkName) ?>"
+                 data-field-name="<?= e($pkName) ?>"
+                 inputmode="numeric"
+                 min="1"
+                 step="1"
+                 required
+                 placeholder="Ingrese el código oficial (NOMINA - MTESS)">
+          <div style="color:var(--muted);font-size:12px;margin-top:6px;">
+            Este catálogo usa códigos predefinidos. En “Editar” el código no se cambia.
+          </div>
+        <?php endif; ?>
 
         <?php foreach ($cat['fields'] as $field => $meta): ?>
           <label class="label"><?= e($field) ?></label>

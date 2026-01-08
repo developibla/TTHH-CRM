@@ -1,16 +1,13 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Configuración de catálogos y su mapeo a tablas reales.
- * Ajustá los nombres de tabla/PK/campos si difieren en tu BD.
- */
 function catalogos_config(): array {
   return [
     'cargo' => [
       'title' => 'Cargos',
       'table' => 'cargo',
       'pk' => 'CargoId',
+      'manual_pk' => false,
       'fields' => [
         'Cargo' => ['required' => true],
       ],
@@ -19,6 +16,7 @@ function catalogos_config(): array {
       'title' => 'Áreas',
       'table' => 'area',
       'pk' => 'AreaId',
+      'manual_pk' => false,
       'fields' => [
         'Area' => ['required' => true],
       ],
@@ -27,6 +25,7 @@ function catalogos_config(): array {
       'title' => 'Sectores',
       'table' => 'sector',
       'pk' => 'SectorId',
+      'manual_pk' => false,
       'fields' => [
         'Sector' => ['required' => true],
       ],
@@ -35,6 +34,7 @@ function catalogos_config(): array {
       'title' => 'Tipos',
       'table' => 'tipo',
       'pk' => 'TipoId',
+      'manual_pk' => false,
       'fields' => [
         'Tipo' => ['required' => true],
       ],
@@ -43,12 +43,80 @@ function catalogos_config(): array {
       'title' => 'Turnos',
       'table' => 'turno',
       'pk' => 'TurnoId',
+      'manual_pk' => false,
       'fields' => [
         'Turno' => ['required' => true],
         'TurnoHoraEntrada' => ['type' => 'time'],
         'TurnoHoraSalida' => ['type' => 'time'],
         'TurnoHoraSaleAlmorzar' => ['type' => 'time'],
         'TurnoHoraEntraAlmorzar' => ['type' => 'time'],
+      ],
+    ],
+
+    'estadocivil' => [
+      'title' => 'Estado civil',
+      'table' => 'estadocivil',
+      'pk' => 'EstadoCivilId',
+      'manual_pk' => false,
+      'fields' => [
+        'EstadoCivilDes' => ['required' => true],
+      ],
+    ],
+    'tipodocumento' => [
+      'title' => 'Tipo de documento',
+      'table' => 'tipodocumento',
+      'pk' => 'TipoDocumentoId',
+      'manual_pk' => false,
+      'fields' => [
+        'TipoDocumentoDes' => ['required' => true],
+      ],
+    ],
+    'pais' => [
+      'title' => 'País',
+      'table' => 'pais',
+      'pk' => 'PaisId',
+      'manual_pk' => false,
+      'fields' => [
+        'PaisDes' => ['required' => true],
+      ],
+    ],
+
+    // ✅ IDs NO AUTONUMÉRICOS (se cargan desde planilla)
+    'departamento' => [
+      'title' => 'Departamento',
+      'table' => 'departamento',
+      'pk' => 'DptoId',
+      'manual_pk' => true,
+      'fields' => [
+        'DptoDes' => ['required' => true],
+      ],
+    ],
+    'distrito' => [
+      'title' => 'Distrito',
+      'table' => 'distrito',
+      'pk' => 'DistritoId',
+      'manual_pk' => true,
+      'fields' => [
+        'DistritoDes' => ['required' => true],
+      ],
+    ],
+    'localidad' => [
+      'title' => 'Localidad',
+      'table' => 'localidad',
+      'pk' => 'LocalidadId',
+      'manual_pk' => true,
+      'fields' => [
+        'LocalidadDes' => ['required' => true],
+      ],
+    ],
+
+    'formapago' => [
+      'title' => 'Forma de pago',
+      'table' => 'formapago',
+      'pk' => 'FormaPagoId',
+      'manual_pk' => false,
+      'fields' => [
+        'FormaPagoDes' => ['required' => true],
       ],
     ],
   ];
@@ -64,6 +132,7 @@ function catalogo_get(string $key): array {
     'title' => $c['title'],
     'table' => $c['table'],
     'pk' => $c['pk'],
+    'manual_pk' => (bool)($c['manual_pk'] ?? false),
     'fields' => $c['fields'],
   ];
 }
@@ -77,7 +146,6 @@ function catalogo_list(string $key, string $q = ''): array {
   $params = [];
 
   if ($q !== '') {
-    // buscar en todos los campos configurados
     $likes = [];
     foreach (array_keys($cat['fields']) as $f) {
       $likes[] = "`$f` LIKE ?";
@@ -96,9 +164,6 @@ function catalogo_find(string $key, int $id): ?array {
   return DB::fetchOne($sql, [$id]);
 }
 
-/**
- * Guardar (insert/update) y eliminar
- */
 function catalogo_save(string $key, array $data, ?int $id): void {
   $cat = catalogo_get($key);
   $table = $cat['table'];
@@ -115,6 +180,14 @@ function catalogo_save(string $key, array $data, ?int $id): void {
   $payload = [];
   foreach ($cols as $c) {
     $payload[$c] = $data[$c] ?? null;
+  }
+
+  // ✅ Si PK es manual, en insert debemos incluirlo
+  if ($cat['manual_pk']) {
+    $manualId = isset($data[$pk]) ? (int)$data[$pk] : 0;
+    if (!$id && $manualId > 0) {
+      $payload = array_merge([$pk => $manualId], $payload);
+    }
   }
 
   if ($id && $id > 0) {
@@ -144,147 +217,4 @@ function catalogo_delete(string $key, int $id): void {
   $cat = catalogo_get($key);
   $sql = "DELETE FROM `{$cat['table']}` WHERE `{$cat['pk']}` = ? LIMIT 1";
   DB::exec($sql, [$id]);
-}
-
-/**
- * ==========================================
- * HANDLER de la ruta: index.php?r=catalogos_post
- * - soporta POST tradicional + AJAX (_ajax=1)
- * ==========================================
- */
-function catalogos_post(): void {
-  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirect('index.php?r=catalogos');
-  }
-
-  // CSRF
-  $token = (string)($_POST['_csrf'] ?? '');
-  if (!csrf_validate($token)) {
-    catalogos_respond(false, 'Sesión inválida (CSRF). Actualizá la página e intentá de nuevo.');
-  }
-
-  $key = (string)($_POST['t'] ?? 'cargo');
-  $cat = catalogo_get($key);
-
-  // DELETE
-  $deleteId = (int)($_POST['delete_id'] ?? 0);
-  if ($deleteId > 0) {
-    try {
-      catalogo_delete($key, $deleteId);
-      catalogos_respond(true, 'Registro eliminado correctamente.', [
-        't' => $key,
-        'deleted_id' => $deleteId,
-        'fields' => array_keys($cat['fields']),
-        'csrf' => csrf_token(),
-      ]);
-    } catch (Throwable $e) {
-      catalogos_respond(false, 'No se pudo eliminar. ' . $e->getMessage());
-    }
-  }
-
-  // SAVE (insert / update)
-  $id = (int)($_POST['id'] ?? 0);
-  $data = [];
-
-  // tomar fields configurados
-  foreach ($cat['fields'] as $field => $meta) {
-    $val = $_POST[$field] ?? '';
-
-    // normalizar time => HH:MM
-    if (($meta['type'] ?? '') === 'time') {
-      $val = is_string($val) ? trim($val) : '';
-      if ($val !== '' && strlen($val) >= 5) $val = substr($val, 0, 5);
-      $data[$field] = $val;
-      continue;
-    }
-
-    // texto => trim + UPPER (server-side)
-    $val = is_string($val) ? trim($val) : '';
-    if ($val !== '') {
-      $val = mb_strtoupper($val, 'UTF-8');
-    }
-    $data[$field] = $val;
-  }
-
-  // Activo
-  $data['Activo'] = isset($_POST['Activo']) ? (int)$_POST['Activo'] : 1;
-
-  // validar requeridos
-  foreach ($cat['fields'] as $field => $meta) {
-    if (!empty($meta['required'])) {
-      $v = (string)($data[$field] ?? '');
-      if (trim($v) === '') {
-        catalogos_respond(false, "El campo '$field' es obligatorio.", [
-          't' => $key,
-          'fields' => array_keys($cat['fields']),
-          'csrf' => csrf_token(),
-        ]);
-      }
-    }
-  }
-
-  try {
-    catalogo_save($key, $data, $id > 0 ? $id : null);
-
-    // obtener ID final (si era insert)
-    $finalId = $id > 0 ? $id : (int)DB::lastId();
-
-    $row = catalogo_find($key, $finalId) ?: [];
-    $rowOut = catalogos_row_out($cat, $row);
-
-    catalogos_respond(true, $id > 0 ? 'Cambios guardados.' : 'Registro agregado.', [
-      't' => $key,
-      'row' => $rowOut,
-      'fields' => array_keys($cat['fields']),
-      'csrf' => csrf_token(),
-    ]);
-
-  } catch (Throwable $e) {
-    catalogos_respond(false, 'No se pudo guardar. ' . $e->getMessage(), [
-      't' => $key,
-      'fields' => array_keys($cat['fields']),
-      'csrf' => csrf_token(),
-    ]);
-  }
-}
-
-/**
- * Convertir una fila de BD a un objeto listo para JS
- * - agrega 'id' estándar
- * - mantiene campos + Activo
- */
-function catalogos_row_out(array $cat, array $row): array {
-  $out = [];
-  $pk = $cat['pk'];
-
-  $out['id'] = (int)($row[$pk] ?? 0);
-
-  foreach (array_keys($cat['fields']) as $f) {
-    $out[$f] = $row[$f] ?? '';
-  }
-
-  $out['Activo'] = (int)($row['Activo'] ?? 1);
-  return $out;
-}
-
-/**
- * Responder AJAX o redirect con flash
- */
-function catalogos_respond(bool $ok, string $msg, array $extra = []): void {
-  $isAjax = (string)($_POST['_ajax'] ?? '') === '1';
-
-  if ($isAjax) {
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(array_merge([
-      'ok' => $ok,
-      'message' => $msg,
-    ], $extra), JSON_UNESCAPED_UNICODE);
-    exit;
-  }
-
-  if ($ok) $_SESSION['flash_ok'] = $msg;
-  else $_SESSION['flash_error'] = $msg;
-
-  $t = (string)($extra['t'] ?? ($_POST['t'] ?? 'cargo'));
-  redirect('index.php?r=catalogos&t=' . urlencode($t));
 }

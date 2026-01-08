@@ -24,7 +24,9 @@ $menu = [
     'icon' => 'wrench',
     'items' => [
       ['title' => 'Parámetros de Empresa', 'route' => 'empresa',    'icon' => 'building'],
-      ['title' => 'Catálogos',            'route' => 'catalogos',  'icon' => 'list'],
+      ['title' => 'Catálogos',             'route' => 'catalogos',  'icon' => 'list'],
+      // ✅ NUEVO
+      ['title' => 'Importación CSV',       'route' => 'import_geo', 'icon' => 'list'],
     ],
   ],
   [
@@ -41,9 +43,9 @@ $menu = [
     'title' => 'MOVIMIENTOS',
     'icon' => 'arrow',
     'items' => [
-      ['title' => 'Vacaciones',               'route' => 'vacaciones',   'icon' => 'calendar'],
-      ['title' => 'Suspensiones',             'route' => 'suspensiones', 'icon' => 'pause'],
-      ['title' => 'Mov. por Conceptos',       'route' => 'mov_conceptos','icon' => 'repeat'],
+      ['title' => 'Vacaciones',               'route' => 'vacaciones',    'icon' => 'calendar'],
+      ['title' => 'Suspensiones',             'route' => 'suspensiones',  'icon' => 'pause'],
+      ['title' => 'Mov. por Conceptos',       'route' => 'mov_conceptos', 'icon' => 'repeat'],
     ],
   ],
   [
@@ -51,9 +53,9 @@ $menu = [
     'title' => 'REPORTES',
     'icon' => 'chart',
     'items' => [
-      ['title' => 'Listados',         'route' => 'reportes',     'icon' => 'doc'],
-      ['title' => 'Recibos',          'route' => 'recibos',      'icon' => 'receipt'],
-      ['title' => 'Planillas IPS',    'route' => 'planilla_ips', 'icon' => 'shield'],
+      ['title' => 'Listados',         'route' => 'reportes',      'icon' => 'doc'],
+      ['title' => 'Recibos',          'route' => 'recibos',       'icon' => 'receipt'],
+      ['title' => 'Planillas IPS',    'route' => 'planilla_ips',  'icon' => 'shield'],
       ['title' => 'Planillas MTESS',  'route' => 'planilla_mtess','icon' => 'briefcase'],
     ],
   ],
@@ -63,6 +65,7 @@ $menu = [
 $openKey = $menu[0]['key'];
 foreach ($menu as $sec) {
   foreach ($sec['items'] as $it) {
+    // para import_geo, también consideramos que puede venir con query t=...
     if (is_active_route($it['route'])) {
       $openKey = $sec['key'];
       break 2;
@@ -171,9 +174,17 @@ function ico(string $name): string {
 
     <div class="panel" style="<?= $isOpen ? 'display:block;' : 'display:none;' ?>">
       <?php foreach ($sec['items'] as $it): ?>
-        <?php $active = is_active_route($it['route']); ?>
+        <?php
+          $active = is_active_route($it['route']);
+          $href = "index.php?r=" . rawurlencode($it['route']);
+
+          // ✅ Para import_geo, mandamos t=departamento como default
+          if ($it['route'] === 'import_geo') {
+            $href .= "&t=departamento";
+          }
+        ?>
         <a class="<?= $active ? 'active' : '' ?>"
-           href="index.php?r=<?= e($it['route']) ?>">
+           href="<?= e($href) ?>">
           <span><?= e($it['title']) ?></span>
         </a>
       <?php endforeach; ?>

@@ -1,17 +1,35 @@
 <?php
 declare(strict_types=1);
 
-function csrf_token(): string {
-  if (empty($_SESSION['_csrf'])) {
-    $_SESSION['_csrf'] = bin2hex(random_bytes(16));
+/**
+ * CSRF Helper (funcional, no clase)
+ * Uso:
+ *  - csrf_token()  → genera / devuelve token
+ *  - csrf_verify($token) → valida token recibido
+ */
+
+function csrf_token(): string
+{
+  if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
   }
-  return (string)$_SESSION['_csrf'];
+
+  if (empty($_SESSION['_csrf'])) {
+    $_SESSION['_csrf'] = bin2hex(random_bytes(32));
+  }
+
+  return $_SESSION['_csrf'];
 }
 
-function csrf_check(?string $token): void {
-  $ok = isset($_SESSION['_csrf']) && is_string($token) && hash_equals($_SESSION['_csrf'], $token);
-  if (!$ok) {
-    http_response_code(403);
-    exit('CSRF inválido.');
+function csrf_verify(?string $token): bool
+{
+  if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
   }
+
+  if (empty($_SESSION['_csrf']) || empty($token)) {
+    return false;
+  }
+
+  return hash_equals($_SESSION['_csrf'], $token);
 }

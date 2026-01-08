@@ -24,13 +24,10 @@ final class Router
         return;
 
       case 'login_post':
-        // Si tu Auth.php define una función para procesar login, la usamos.
-        // (sin romper tu estructura actual)
         if (function_exists('auth_login_post')) {
           auth_login_post();
           return;
         }
-        // fallback (si lo manejas como view)
         View::render('home/login_post');
         return;
 
@@ -39,7 +36,6 @@ final class Router
           auth_logout();
           return;
         }
-        // fallback simple
         $_SESSION = [];
         if (ini_get("session.use_cookies")) {
           $params = session_get_cookie_params();
@@ -56,7 +52,6 @@ final class Router
       // HOME
       // =========================
       case 'home':
-        // Si tenés dashboard luego, acá lo cambiamos.
         redirect('index.php?r=catalogos&t=cargo');
         return;
 
@@ -64,12 +59,10 @@ final class Router
       // MANTENIMIENTO
       // =========================
       case 'empresa':
-        // Si existe el view, lo renderiza.
         View::render('mantenimiento/empresa');
         return;
 
       case 'catalogos':
-        // Compatibilidad: si tu archivo es catalogo.php (singular) o catalogos.php (plural)
         $base = __DIR__ . '/../../views/mantenimiento/';
         if (is_file($base . 'catalogo.php')) {
           View::render('mantenimiento/catalogo');
@@ -79,8 +72,6 @@ final class Router
         return;
 
       case 'catalogos_post':
-        // Si tu Catalogos.php define una función que procesa alta/edición/baja, la usamos.
-        // Esto es lo que probablemente ya te está funcionando.
         if (function_exists('catalogos_post')) {
           catalogos_post();
           return;
@@ -90,14 +81,32 @@ final class Router
           return;
         }
 
-        // fallback (si lo manejas como view)
         $base = __DIR__ . '/../../views/mantenimiento/';
         if (is_file($base . 'catalogos_post.php')) {
           View::render('mantenimiento/catalogos_post');
           return;
         }
-        // si no existe, volvemos a la pantalla principal de catálogos
+
         redirect('index.php?r=catalogos&t=' . urlencode((string)($_POST['t'] ?? 'cargo')));
+        return;
+
+      // =========================
+      // IMPORTACIÓN MASIVA CSV (GEO)
+      // =========================
+      case 'import_geo':
+        View::render('mantenimiento/import_geo');
+        return;
+
+      case 'import_geo_post':
+        // handler (recomendado) para no mezclar lógica con vistas
+        $handler = __DIR__ . '/../handlers/import_geo_post.php';
+        if (is_file($handler)) {
+          require $handler;
+          return;
+        }
+        // fallback: si no existe handler, volvemos
+        $_SESSION['flash_error'] = 'Handler de importación no encontrado (app/handlers/import_geo_post.php).';
+        redirect('index.php?r=import_geo&t=' . urlencode((string)($_POST['t'] ?? 'departamento')));
         return;
 
       // =========================
@@ -150,7 +159,6 @@ final class Router
       // =========================
       default:
         http_response_code(404);
-        // si no tenés not_found.php, no pasa nada: mostramos un mensaje simple
         $nf = __DIR__ . '/../../views/home/not_found.php';
         if (is_file($nf)) {
           View::render('home/not_found', ['route' => $r]);
