@@ -11,6 +11,7 @@ require __DIR__ . '/app/core/Helpers.php';
 require __DIR__ . '/app/core/Csrf.php';
 require __DIR__ . '/app/core/View.php';
 require __DIR__ . '/app/core/Auth.php';
+require __DIR__ . '/app/core/Catalogos.php';
 require __DIR__ . '/app/core/Router.php';
 
 Router::dispatch();

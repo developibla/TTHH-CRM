@@ -2,7 +2,9 @@
 declare(strict_types=1);
 
 $err = $_SESSION['login_error'] ?? '';
-unset($_SESSION['login_error']);
+$info = $_SESSION['login_info'] ?? '';
+$lastUser = $_SESSION['login_last_user'] ?? '';
+unset($_SESSION['login_error'], $_SESSION['login_info']);
 
 $empresa = company_params();
 ?>
@@ -24,7 +26,7 @@ $empresa = company_params();
           <div class="logo-fallback">TH</div>
         <?php endif; ?>
         <div>
-          <div style="font-weight:900;font-size:16px;"><?= e($empresa['empresa'] ?: 'Empresa') ?></div>
+          <div style="font-weight:900;font-size:16px;"><?= e((string)($empresa['empresa'] ?? 'Empresa')) ?></div>
           <div style="color:var(--muted);font-size:12px;">Acceso al sistema</div>
         </div>
       </div>
@@ -33,19 +35,28 @@ $empresa = company_params();
         <div class="alert alert-error"><?= e($err) ?></div>
       <?php endif; ?>
 
+      <?php if ($info): ?>
+        <div class="alert alert-ok"><?= e($info) ?></div>
+      <?php endif; ?>
+
       <form method="post" action="index.php?r=login_post">
         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
 
         <label class="label">Usuario</label>
-        <input class="input" name="usuario" required autocomplete="username">
+        <input class="input" name="usuario" required autocomplete="username"
+               value="<?= e((string)$lastUser) ?>">
 
         <label class="label">Clave</label>
         <input class="input" name="clave" type="password" required autocomplete="current-password">
 
         <div style="display:flex;justify-content:flex-end;margin-top:12px;">
-          <button class="btn btn-primary" type="submit">Ingresar</button>
+          <button class="btn btn-primary" type="submit" title="Ingresar">Ingresar</button>
         </div>
       </form>
+
+      <div style="margin-top:12px;color:var(--muted);font-size:12px;">
+        Si olvidaste tu clave, solicitá al administrador la restauración.
+      </div>
     </div>
   </div>
 </body>

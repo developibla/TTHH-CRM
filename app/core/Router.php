@@ -21,25 +21,19 @@ final class Router {
 
       // MANTENIMIENTO
       case 'empresa':
-        View::render('mantenimiento/empresa'); // lo hacemos después
+        View::render('mantenimiento/empresa');
         break;
+
+      case 'empresa_post':
+        require __DIR__ . '/../../views/mantenimiento/empresa_post.php';
+        break;
+
       case 'catalogos':
-        View::render('mantenimiento/catalogos'); // lo que ya tenés, lo movemos luego
+        View::render('mantenimiento/catalogos');
         break;
 
-      // LEGAJOS
-      case 'colaboradores':
-        View::render('legajos/colaboradores'); // próximo
-        break;
-
-      // MOVIMIENTOS
-      case 'vacaciones':
-        View::render('movimientos/vacaciones'); // próximo
-        break;
-
-      // REPORTES
-      case 'rpt_colaboradores':
-        View::render('reportes/rpt_colaboradores'); // próximo
+      case 'catalogos_post':
+        require __DIR__ . '/../../views/mantenimiento/catalogos_post.php';
         break;
 
       default:

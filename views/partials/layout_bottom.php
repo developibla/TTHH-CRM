@@ -1,12 +1,11 @@
-<?php declare(strict_types=1); ?>
-
-    </main>
-  </div>
-
+<?php
+declare(strict_types=1);
+?>
   <div class="footer">
-    © <?= date('Y') ?> · Gestión de Talento Humano
+    <?= e(date('Y')) ?> · Gestion de Talento Humano - powered by IBLA Soluciones
   </div>
+</div> <!-- .container -->
 
-</div>
+<script src="public/assets/js/app.js"></script>
 </body>
 </html>
