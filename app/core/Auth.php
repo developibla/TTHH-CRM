@@ -1,129 +1,126 @@
 <?php
 declare(strict_types=1);
 
-final class Auth
+/**
+ * AUTH (funcional)
+ * Tabla: usuarios(id, usuario, nombre, email, pass_hash, rol, activo, intentos_fallidos, bloqueado_hasta, ...)
+ */
+
+function auth_login(string $usuario, string $clave): bool
 {
-  /**
-   * Intenta login con tu tabla usuarios:
-   * - usuario (unique)
-   * - pass_hash (password_hash)
-   * - activo (1/0)
-   * - intentos_fallidos
-   * - bloqueado_hasta (datetime)
-   * - rol (ADMIN/RRHH/LECTURA)
-   */
-  public static function attempt(string $usuario, string $clave): bool
-  {
-    $usuario = trim($usuario);
+  $usuario = trim($usuario);
 
-    $u = DB::fetchOne(
-      "SELECT id, usuario, nombre, email, pass_hash, rol, activo, intentos_fallidos, bloqueado_hasta
-       FROM usuarios
-       WHERE usuario = ?
-       LIMIT 1",
-      [$usuario]
-    );
+  // buscar usuario
+  $u = DB::fetchOne("SELECT * FROM usuarios WHERE usuario = ? LIMIT 1", [$usuario]);
+  if (!$u) {
+    // guardamos para UX
+    $_SESSION['login_last_user'] = $usuario;
+    return false;
+  }
 
-    // Si no existe el usuario, igual devolvemos false sin dar pistas
-    if (!$u) {
+  // activo?
+  if ((int)$u['activo'] !== 1) {
+    $_SESSION['login_last_user'] = $usuario;
+    $_SESSION['login_error'] = 'Usuario inactivo. Contacte al administrador.';
+    return false;
+  }
+
+  // bloqueado?
+  if (!empty($u['bloqueado_hasta'])) {
+    $bh = strtotime((string)$u['bloqueado_hasta']);
+    if ($bh !== false && $bh > time()) {
+      $_SESSION['login_last_user'] = $usuario;
+      $_SESSION['login_error'] = 'Usuario bloqueado temporalmente. Intente más tarde.';
       return false;
     }
+  }
 
-    // Verificar activo
-    if ((int)$u['activo'] !== 1) {
-      // Usuario inactivo
-      return false;
+  // validar password
+  $ok = password_verify($clave, (string)$u['pass_hash']);
+
+  if (!$ok) {
+    // incrementar intentos
+    $fails = (int)($u['intentos_fallidos'] ?? 0) + 1;
+
+    // política simple: al 5° intento bloquear 10 min
+    $bloqHasta = null;
+    if ($fails >= 5) {
+      $bloqHasta = date('Y-m-d H:i:s', time() + 10 * 60);
     }
 
-    // Verificar bloqueo por tiempo
-    if (!empty($u['bloqueado_hasta'])) {
-      $bh = strtotime((string)$u['bloqueado_hasta']);
-      if ($bh !== false && $bh > time()) {
-        // Aún bloqueado
-        return false;
-      }
-    }
-
-    $hash = (string)$u['pass_hash'];
-    $ok = ($hash !== '') && password_verify($clave, $hash);
-
-    if (!$ok) {
-      self::registerFailedAttempt((int)$u['id'], (int)$u['intentos_fallidos']);
-      return false;
-    }
-
-    // login OK → resetear intentos/bloqueo
     DB::exec(
       "UPDATE usuarios
-       SET intentos_fallidos = 0, bloqueado_hasta = NULL
+       SET intentos_fallidos = ?, bloqueado_hasta = ?
        WHERE id = ?",
-      [(int)$u['id']]
+      [$fails, $bloqHasta, (int)$u['id']]
     );
 
-    // Guardar sesión
-    $_SESSION['user'] = [
-      'id' => (int)$u['id'],
-      'usuario' => (string)$u['usuario'],
-      'nombre' => (string)$u['nombre'],
-      'email' => (string)($u['email'] ?? ''),
-      'rol' => (string)$u['rol'],
-    ];
-
-    session_regenerate_id(true);
-    return true;
+    $_SESSION['login_last_user'] = $usuario;
+    $_SESSION['login_error'] = 'Credenciales inválidas.';
+    return false;
   }
 
-  private static function registerFailedAttempt(int $userId, int $currentFails): void
-  {
-    $fails = $currentFails + 1;
+  // reset intentos/bloqueo
+  DB::exec("UPDATE usuarios SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = ?", [(int)$u['id']]);
 
-    // Política sugerida: 5 intentos → bloqueo 15 minutos
-    $max = 5;
-    $lockMinutes = 15;
+  // guardar sesión (lo mínimo)
+  $_SESSION['user'] = [
+    'id' => (int)$u['id'],
+    'usuario' => (string)$u['usuario'],
+    'nombre' => (string)$u['nombre'],
+    'rol' => (string)$u['rol'],
+  ];
 
-    if ($fails >= $max) {
-      DB::exec(
-        "UPDATE usuarios
-         SET intentos_fallidos = ?, bloqueado_hasta = DATE_ADD(NOW(), INTERVAL ? MINUTE)
-         WHERE id = ?",
-        [$fails, $lockMinutes, $userId]
-      );
-    } else {
-      DB::exec(
-        "UPDATE usuarios
-         SET intentos_fallidos = ?
-         WHERE id = ?",
-        [$fails, $userId]
-      );
+  // limpiar mensajes
+  unset($_SESSION['login_error'], $_SESSION['login_info']);
+
+  return true;
+}
+
+/**
+ * Procesa POST del login (router llama a esto si existe)
+ */
+function auth_login_post(): void
+{
+  // CSRF
+  if (!csrf_verify($_POST['_csrf'] ?? '')) {
+    $_SESSION['login_error'] = 'Sesión inválida. Actualice la página e intente de nuevo.';
+    redirect('index.php?r=login');
+  }
+
+  $usuario = trim((string)($_POST['usuario'] ?? ''));
+  // ✅ OJO: tu form envía "clave"
+  $clave   = (string)($_POST['clave'] ?? '');
+
+  $_SESSION['login_last_user'] = $usuario;
+
+  if ($usuario === '' || $clave === '') {
+    $_SESSION['login_error'] = 'Debe ingresar usuario y clave.';
+    redirect('index.php?r=login');
+  }
+
+  if (!auth_login($usuario, $clave)) {
+    // auth_login ya carga login_error cuando corresponde
+    if (empty($_SESSION['login_error'])) {
+      $_SESSION['login_error'] = 'Credenciales inválidas.';
     }
+    redirect('index.php?r=login');
   }
 
-  public static function logout(): void
-  {
-    unset($_SESSION['user']);
-    session_regenerate_id(true);
-  }
+  // OK
+  redirect('index.php?r=home');
+}
 
-  /**
-   * Para mostrar info de bloqueo/estado en el login (opcional)
-   */
-  public static function getUserLoginStatus(string $usuario): array
-  {
-    $u = DB::fetchOne(
-      "SELECT activo, intentos_fallidos, bloqueado_hasta
-       FROM usuarios
-       WHERE usuario = ?
-       LIMIT 1",
-      [trim($usuario)]
+function auth_logout(): void
+{
+  $_SESSION = [];
+  if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(session_name(), '', time() - 42000,
+      $params["path"], $params["domain"],
+      $params["secure"], $params["httponly"]
     );
-
-    if (!$u) return ['exists' => false];
-
-    return [
-      'exists' => true,
-      'activo' => (int)$u['activo'],
-      'intentos_fallidos' => (int)$u['intentos_fallidos'],
-      'bloqueado_hasta' => (string)($u['bloqueado_hasta'] ?? ''),
-    ];
   }
+  session_destroy();
+  redirect('index.php?r=login');
 }

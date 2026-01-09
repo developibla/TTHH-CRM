@@ -115,6 +115,13 @@ final class Router
       case 'colaboradores':
         View::render('legajos/colaboradores');
         return;
+        
+        case 'colaboradores_post':
+          require __DIR__ . '/../handlers/colaboradores_post.php';
+          return;
+        
+        View::render('legajos/colaboradores_post');
+        return;
 
       case 'contratos':
         View::render('legajos/contratos');

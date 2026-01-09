@@ -6,6 +6,10 @@ $info = $_SESSION['login_info'] ?? '';
 $lastUser = $_SESSION['login_last_user'] ?? '';
 unset($_SESSION['login_error'], $_SESSION['login_info']);
 
+$flashErr = $_SESSION['flash_error'] ?? '';
+$flashOk  = $_SESSION['flash_ok'] ?? '';
+unset($_SESSION['flash_error'], $_SESSION['flash_ok']);
+
 $empresa = company_params();
 ?>
 <!doctype html>
@@ -35,8 +39,16 @@ $empresa = company_params();
         <div class="alert alert-error"><?= e($err) ?></div>
       <?php endif; ?>
 
+      <?php if ($flashErr): ?>
+        <div class="alert alert-error"><?= e($flashErr) ?></div>
+      <?php endif; ?>
+
       <?php if ($info): ?>
         <div class="alert alert-ok"><?= e($info) ?></div>
+      <?php endif; ?>
+
+      <?php if ($flashOk): ?>
+        <div class="alert alert-ok"><?= e($flashOk) ?></div>
       <?php endif; ?>
 
       <form method="post" action="index.php?r=login_post">

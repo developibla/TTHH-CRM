@@ -25,8 +25,6 @@ $menu = [
     'items' => [
       ['title' => 'Parámetros de Empresa', 'route' => 'empresa',    'icon' => 'building'],
       ['title' => 'Catálogos',             'route' => 'catalogos',  'icon' => 'list'],
-      // ✅ NUEVO
-      ['title' => 'Importación CSV',       'route' => 'import_geo', 'icon' => 'list'],
     ],
   ],
   [
