@@ -5,7 +5,7 @@ $q = trim((string)($_GET['q'] ?? ''));
 
 $items = colaboradores_list($q);
 
-// combos (ajustá nombres de tabla si difieren)
+// combos
 $tipoDoc = combo_list('tipodocumento', 'TipoDocumentoId', 'TipoDocumentoDes');
 $estadoCivil = combo_list('estadocivil', 'EstadoCivilId', 'EstadoCivilDes');
 $paises = combo_list('pais', 'PaisId', 'PaisDes');
@@ -34,14 +34,13 @@ function json_attr(array $arr): string {
 ?>
 
 <style>
-/* Reusa tu estética modal del catálogo, pero un poco más alto */
 .modal{ position:fixed; inset:0; display:none; z-index:9999; }
 .modal.is-open{ display:block; }
 .modal-overlay{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
 .modal-dialog{
   position:relative;
-  width:min(980px, 96vw);
-  margin:5vh auto;
+  width:min(1100px, 96vw);
+  margin:4vh auto;
   background:rgba(255,255,255,.98);
   border-radius:16px;
   box-shadow:0 18px 50px rgba(0,0,0,.25);
@@ -56,7 +55,7 @@ function json_attr(array $arr): string {
 }
 .modal-title{ font-weight:950; margin:0; font-size:15px; }
 .modal-sub{ color:var(--muted); font-size:12px; margin-top:2px; }
-.modal-body{ padding:14px 16px; max-height: 72vh; overflow:auto; }
+.modal-body{ padding:14px 16px; max-height: 74vh; overflow:auto; }
 .modal-actions{
   display:flex; justify-content:flex-end; gap:10px;
   padding:12px 16px;
@@ -78,7 +77,7 @@ body.modal-open{ overflow:hidden; }
   .form-grid{ grid-template-columns: 1fr; }
 }
 
-/* Eliminar elegante (gris -> rojo hover) */
+/* Eliminar elegante */
 .btn-danger{
   background: rgba(15, 23, 42, .06) !important;
   border: 1px solid rgba(15, 23, 42, .14) !important;
@@ -90,6 +89,16 @@ body.modal-open{ overflow:hidden; }
   border-color: rgba(220, 53, 69, .35) !important;
   color: rgba(220, 53, 69, .95) !important;
 }
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 8px; border-radius:999px;
+  border:1px solid var(--border);
+  background: rgba(15,42,28,.02);
+  font-size:12px; font-weight:900;
+}
+.badge.off{ opacity:.7; }
+.small-help{ font-size:12px; color:var(--muted); margin-top:6px; }
 </style>
 
 <div class="card">
@@ -104,8 +113,8 @@ body.modal-open{ overflow:hidden; }
     <div class="tools">
       <form method="get" action="index.php" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input type="hidden" name="r" value="colaboradores">
-        <input class="input" name="q" placeholder="Buscar (nombre, doc, legajo, email)..." value="<?= e($q) ?>"
-               style="min-width:320px;max-width:520px;">
+        <input class="input" name="q" placeholder="Buscar (nombre, doc, legajo, email, ruc)..." value="<?= e($q) ?>"
+               style="min-width:340px;max-width:560px;">
         <button class="btn btn-ico btn-outline" type="submit" title="Buscar">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
@@ -141,13 +150,14 @@ body.modal-open{ overflow:hidden; }
           <th>Legajo</th>
           <th>Apellidos</th>
           <th>Nombres</th>
+          <th>Edad</th>
           <th>Doc</th>
-          <th>Email</th>
-          <th>Teléfono</th>
-          <th>Cargo</th>
-          <th>Área</th>
-          <th>Sector</th>
-          <th>Turno</th>
+          <th>RUC</th>
+          <th>IPS</th>
+          <th>Salario Base</th>
+          <th>Plus Cargo</th>
+          <th>Bonif. Fam</th>
+          <th>Aguinaldo</th>
           <th>Activo</th>
         </tr>
       </thead>
@@ -158,33 +168,65 @@ body.modal-open{ overflow:hidden; }
 
         <?php foreach ($items as $row): ?>
           <?php
-            // Para editar via modal sin pedir nuevamente a BD:
             $rowObj = [
               'ColaboradorId' => (int)$row['ColaboradorId'],
               'Legajo' => (string)($row['Legajo'] ?? ''),
               'Nombres' => (string)($row['Nombres'] ?? ''),
               'Apellidos' => (string)($row['Apellidos'] ?? ''),
+
               'TipoDocumentoId' => (string)($row['TipoDocumentoId'] ?? ''),
               'NroDocumento' => (string)($row['NroDocumento'] ?? ''),
+              'RUC' => (string)($row['RUC'] ?? ''),
+
               'EstadoCivilId' => (string)($row['EstadoCivilId'] ?? ''),
               'FechaNacimiento' => (string)($row['FechaNacimiento'] ?? ''),
+              'GrupoSanguineo' => (string)($row['GrupoSanguineo'] ?? ''),
+              'VencimientoCI' => (string)($row['VencimientoCI'] ?? ''),
+
               'Email' => (string)($row['Email'] ?? ''),
               'Telefono' => (string)($row['Telefono'] ?? ''),
+              'TelefonoParticular' => (string)($row['TelefonoParticular'] ?? ''),
               'Direccion' => (string)($row['Direccion'] ?? ''),
+
               'PaisId' => (string)($row['PaisId'] ?? ''),
               'DptoId' => (string)($row['DptoId'] ?? ''),
               'DistritoId' => (string)($row['DistritoId'] ?? ''),
               'LocalidadId' => (string)($row['LocalidadId'] ?? ''),
+
               'CargoId' => (string)($row['CargoId'] ?? ''),
               'AreaId' => (string)($row['AreaId'] ?? ''),
               'SectorId' => (string)($row['SectorId'] ?? ''),
               'TurnoId' => (string)($row['TurnoId'] ?? ''),
               'TipoId' => (string)($row['TipoId'] ?? ''),
+
               'FormaPagoId' => (string)($row['FormaPagoId'] ?? ''),
               'FechaIngreso' => (string)($row['FechaIngreso'] ?? ''),
+              'FechaEgreso' => (string)($row['FechaEgreso'] ?? ''),
+
+              'SalarioBase' => (string)($row['SalarioBase'] ?? ''),
+              'PlusCargo' => (string)($row['PlusCargo'] ?? ''),
+              'NroAseguradoIPS' => (string)($row['NroAseguradoIPS'] ?? ''),
+
+              'BonificacionFamiliar' => (int)($row['BonificacionFamiliar'] ?? 0),
+              'Aguinaldo' => (int)($row['Aguinaldo'] ?? 1),
+
+              'FotoSelfiePath' => (string)($row['FotoSelfiePath'] ?? ''),
+              'FotoCIFrentePath' => (string)($row['FotoCIFrentePath'] ?? ''),
+              'FotoCIAtrasPath' => (string)($row['FotoCIAtrasPath'] ?? ''),
+
+              'Observacion' => (string)($row['Observacion'] ?? ''),
+
               'Activo' => (int)($row['Activo'] ?? 1),
+              'Edad' => $row['Edad'] === null ? '' : (string)$row['Edad'],
+              'TipoDocumentoDes' => (string)($row['TipoDocumentoDes'] ?? ''),
             ];
+
+            $sb = (string)($row['SalarioBase'] ?? '');
+            $pc = (string)($row['PlusCargo'] ?? '');
+            $fmtSb = $sb !== '' ? number_format((float)$sb, 0, ',', '.') : '';
+            $fmtPc = $pc !== '' ? number_format((float)$pc, 0, ',', '.') : '';
           ?>
+
           <tr>
             <td>
               <div class="table-actions">
@@ -215,13 +257,14 @@ body.modal-open{ overflow:hidden; }
             <td><?= e((string)($row['Legajo'] ?? '')) ?></td>
             <td><?= e((string)$row['Apellidos']) ?></td>
             <td><?= e((string)$row['Nombres']) ?></td>
+            <td><?= e((string)($rowObj['Edad'] ?? '')) ?></td>
             <td><?= e((string)($row['TipoDocumentoDes'] ?? '')) ?> <?= e((string)($row['NroDocumento'] ?? '')) ?></td>
-            <td><?= e((string)($row['Email'] ?? '')) ?></td>
-            <td><?= e((string)($row['Telefono'] ?? '')) ?></td>
-            <td><?= e((string)($row['CargoDes'] ?? '')) ?></td>
-            <td><?= e((string)($row['AreaDes'] ?? '')) ?></td>
-            <td><?= e((string)($row['SectorDes'] ?? '')) ?></td>
-            <td><?= e((string)($row['TurnoDes'] ?? '')) ?></td>
+            <td><?= e((string)($row['RUC'] ?? '')) ?></td>
+            <td><?= e((string)($row['NroAseguradoIPS'] ?? '')) ?></td>
+            <td><?= e($fmtSb) ?></td>
+            <td><?= e($fmtPc) ?></td>
+            <td><?= ((int)$row['BonificacionFamiliar'] === 1) ? 'Sí' : 'No' ?></td>
+            <td><?= ((int)$row['Aguinaldo'] === 1) ? 'Sí' : 'No' ?></td>
             <td><?= ((int)$row['Activo'] === 1) ? 'Sí' : 'No' ?></td>
           </tr>
         <?php endforeach; ?>
@@ -253,7 +296,7 @@ body.modal-open{ overflow:hidden; }
     </div>
 
     <div class="modal-body">
-      <form method="post" action="index.php?r=colaboradores_post" id="colabForm">
+      <form method="post" action="index.php?r=colaboradores_post" id="colabForm" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
         <input type="hidden" name="ColaboradorId" value="">
 
@@ -289,18 +332,61 @@ body.modal-open{ overflow:hidden; }
           </div>
 
           <div>
-            <label class="label">Estado civil</label>
-            <select class="input" name="EstadoCivilId">
-              <option value="">—</option>
-              <?php foreach ($estadoCivil as $it): ?>
-                <option value="<?= e((string)$it['id']) ?>"><?= e((string)$it['des']) ?></option>
-              <?php endforeach; ?>
-            </select>
+            <label class="label">RUC</label>
+            <input class="input" name="RUC" data-uppercase="1">
           </div>
 
           <div>
             <label class="label">Fecha nacimiento</label>
-            <input class="input" type="date" name="FechaNacimiento">
+            <input class="input" type="date" name="FechaNacimiento" data-dob>
+            <div class="small-help">Al cargar fecha, se calcula la edad.</div>
+          </div>
+
+          <div>
+            <label class="label">Edad</label>
+            <input class="input" name="Edad" readonly data-age>
+          </div>
+
+          <div>
+            <label class="label">Grupo sanguíneo</label>
+            <input class="input" name="GrupoSanguineo" placeholder="Ej: O+ / A-"
+                   data-uppercase="1">
+          </div>
+
+          <div>
+            <label class="label">Vencimiento CI</label>
+            <input class="input" type="date" name="VencimientoCI">
+          </div>
+
+          <div>
+            <label class="label">Nro Asegurado IPS</label>
+            <input class="input" name="NroAseguradoIPS" data-uppercase="1">
+          </div>
+
+          <div>
+            <label class="label">Salario base (PYG)</label>
+            <input class="input" name="SalarioBase" inputmode="numeric" placeholder="Ej: 3500000" data-money>
+          </div>
+
+          <div>
+            <label class="label">Plus por cargo (PYG)</label>
+            <input class="input" name="PlusCargo" inputmode="numeric" placeholder="Ej: 500000" data-money>
+          </div>
+
+          <div>
+            <label class="label">Bonificación familiar</label>
+            <select class="input" name="BonificacionFamiliar">
+              <option value="0" selected>No</option>
+              <option value="1">Sí</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="label">Aguinaldo</label>
+            <select class="input" name="Aguinaldo">
+              <option value="1" selected>Sí</option>
+              <option value="0">No</option>
+            </select>
           </div>
 
           <div>
@@ -313,9 +399,24 @@ body.modal-open{ overflow:hidden; }
             <input class="input" name="Telefono">
           </div>
 
+          <div>
+            <label class="label">Teléfono particular</label>
+            <input class="input" name="TelefonoParticular" inputmode="numeric" placeholder="Solo números">
+          </div>
+
           <div style="grid-column:1/-1;">
             <label class="label">Dirección</label>
             <input class="input" name="Direccion" data-uppercase="1">
+          </div>
+
+          <div>
+            <label class="label">Estado civil</label>
+            <select class="input" name="EstadoCivilId">
+              <option value="">—</option>
+              <?php foreach ($estadoCivil as $it): ?>
+                <option value="<?= e((string)$it['id']) ?>"><?= e((string)$it['des']) ?></option>
+              <?php endforeach; ?>
+            </select>
           </div>
 
           <div>
@@ -424,19 +525,50 @@ body.modal-open{ overflow:hidden; }
           </div>
 
           <div>
+            <label class="label">Fecha egreso</label>
+            <input class="input" type="date" name="FechaEgreso">
+          </div>
+
+          <div>
             <label class="label">Activo</label>
             <select class="input" name="Activo">
               <option value="1" selected>Sí</option>
               <option value="0">No</option>
             </select>
           </div>
+
+          <div style="grid-column:1/-1;">
+            <div class="badge">Fotos</div>
+            <div class="small-help">Opcional. Formatos: JPG/PNG/WEBP (máx 5MB).</div>
+          </div>
+
+          <div>
+            <label class="label">Selfie</label>
+            <input class="input" type="file" name="FotoSelfie" accept="image/*">
+            <div class="small-help" data-preview-selfie></div>
+          </div>
+
+          <div>
+            <label class="label">CI Frente</label>
+            <input class="input" type="file" name="FotoCIFrente" accept="image/*">
+            <div class="small-help" data-preview-frente></div>
+          </div>
+
+          <div>
+            <label class="label">CI Atrás</label>
+            <input class="input" type="file" name="FotoCIAtras" accept="image/*">
+            <div class="small-help" data-preview-atras></div>
+          </div>
+
+          <div style="grid-column:1/-1;">
+            <label class="label">Observación</label>
+            <textarea class="input" name="Observacion" rows="3" style="resize:vertical;"></textarea>
+          </div>
         </div>
 
         <div class="modal-actions">
           <button class="btn btn-outline" type="button" data-colab-cancel>Cancelar</button>
-          <button class="btn btn-primary" type="submit" title="Guardar">
-            Guardar
-          </button>
+          <button class="btn btn-primary" type="submit" title="Guardar">Guardar</button>
         </div>
       </form>
     </div>
@@ -444,13 +576,6 @@ body.modal-open{ overflow:hidden; }
 </div>
 
 <script>
-/**
- * JS mínimo SOLO para esta pantalla:
- * - abre modal (nuevo/editar)
- * - carga datos del row JSON
- * - enfoca primer input
- * - uppercase on blur (ya lo hacés global con data-uppercase si tenés ui.js, pero lo reforzamos acá)
- */
 (function(){
   const modal = document.getElementById('colabModal');
   const form  = document.getElementById('colabForm');
@@ -458,32 +583,45 @@ body.modal-open{ overflow:hidden; }
 
   if(!modal || !form) return;
 
-  const open = () => {
-    modal.classList.add('is-open');
-    document.body.classList.add('modal-open');
+  const open = () => { modal.classList.add('is-open'); document.body.classList.add('modal-open'); };
+  const close = () => { modal.classList.remove('is-open'); document.body.classList.remove('modal-open'); };
+
+  const moneyToDigits = (v) => (v || '').toString().replace(/[^\d]/g,'');
+  const formatPYG = (v) => {
+    const d = moneyToDigits(v);
+    if(!d) return '';
+    return d.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
-  const close = () => {
-    modal.classList.remove('is-open');
-    document.body.classList.remove('modal-open');
+
+  const calcAge = (iso) => {
+    if(!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - d.getFullYear();
+    const m = today.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+    return (age >= 0 && age <= 120) ? String(age) : '';
   };
 
   const resetForm = () => {
     form.reset();
     form.querySelector('input[name="ColaboradorId"]').value = '';
     title.textContent = 'Colaboradores · Nuevo';
+    form.querySelector('[data-age]').value = '';
+    form.querySelector('[data-preview-selfie]').textContent = '';
+    form.querySelector('[data-preview-frente]').textContent = '';
+    form.querySelector('[data-preview-atras]').textContent = '';
   };
 
   // Nuevo
-  const btnAdd = document.querySelector('[data-colab-add]');
-  if (btnAdd) {
-    btnAdd.addEventListener('click', (e) => {
-      e.preventDefault();
-      resetForm();
-      open();
-      const first = form.querySelector('[data-focus-first="1"]');
-      if(first) setTimeout(()=>first.focus(), 40);
-    });
-  }
+  document.querySelector('[data-colab-add]')?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    resetForm();
+    open();
+    const first = form.querySelector('[data-focus-first="1"]');
+    if(first) setTimeout(()=>first.focus(), 40);
+  });
 
   // Editar
   document.querySelectorAll('[data-colab-edit]').forEach(a=>{
@@ -494,11 +632,24 @@ body.modal-open{ overflow:hidden; }
       const row = JSON.parse(a.getAttribute('data-row') || '{}');
       title.textContent = 'Colaboradores · Editar #' + (row.ColaboradorId || '');
 
-      // set values
+      // set values (inputs/selects/textarea)
       Object.keys(row).forEach(k=>{
         const el = form.querySelector(`[name="${k}"]`);
         if(!el) return;
         el.value = (row[k] ?? '');
+      });
+
+      // edad (readonly)
+      form.querySelector('[data-age]').value = calcAge(form.querySelector('[data-dob]').value);
+
+      // previews de fotos (si ya hay path guardado)
+      if (row.FotoSelfiePath) form.querySelector('[data-preview-selfie]').innerHTML = 'Actual: <a href="'+row.FotoSelfiePath+'" target="_blank">ver</a>';
+      if (row.FotoCIFrentePath) form.querySelector('[data-preview-frente]').innerHTML = 'Actual: <a href="'+row.FotoCIFrentePath+'" target="_blank">ver</a>';
+      if (row.FotoCIAtrasPath) form.querySelector('[data-preview-atras]').innerHTML = 'Actual: <a href="'+row.FotoCIAtrasPath+'" target="_blank">ver</a>';
+
+      // money visual
+      form.querySelectorAll('[data-money]').forEach(inp=>{
+        inp.value = formatPYG(inp.value);
       });
 
       open();
@@ -514,10 +665,22 @@ body.modal-open{ overflow:hidden; }
 
   // uppercase on blur
   form.querySelectorAll('[data-uppercase="1"]').forEach(inp=>{
-    inp.addEventListener('blur', ()=>{
-      inp.value = (inp.value || '').toUpperCase();
-    });
+    inp.addEventListener('blur', ()=>{ inp.value = (inp.value || '').toUpperCase(); });
   });
+
+  // money formatting (visual) => backend limpia a dígitos
+  form.querySelectorAll('[data-money]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{ inp.value = formatPYG(inp.value); });
+    inp.addEventListener('blur', ()=>{ inp.value = formatPYG(inp.value); });
+  });
+
+  // edad según fecha nacimiento
+  const dob = form.querySelector('[data-dob]');
+  const age = form.querySelector('[data-age]');
+  if (dob && age) {
+    dob.addEventListener('change', ()=>{ age.value = calcAge(dob.value); });
+    dob.addEventListener('blur', ()=>{ age.value = calcAge(dob.value); });
+  }
 
   // Esc
   document.addEventListener('keydown', (ev)=>{

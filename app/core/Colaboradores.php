@@ -13,14 +13,19 @@ function colaboradores_list(string $q = ''): array
 
   if ($q !== '') {
     $where = "WHERE
-      c.Nombres LIKE ? OR c.Apellidos LIKE ? OR c.Legajo LIKE ? OR c.NroDocumento LIKE ? OR c.Email LIKE ?";
+      c.Nombres LIKE ? OR c.Apellidos LIKE ? OR c.Legajo LIKE ? OR c.NroDocumento LIKE ? OR c.Email LIKE ? OR c.RUC LIKE ?";
     $like = '%' . $q . '%';
-    $params = [$like, $like, $like, $like, $like];
+    $params = [$like, $like, $like, $like, $like, $like];
   }
 
   $sql = "
     SELECT
       c.*,
+      CASE
+        WHEN c.FechaNacimiento IS NULL THEN NULL
+        ELSE TIMESTAMPDIFF(YEAR, c.FechaNacimiento, CURDATE())
+      END AS Edad,
+
       td.TipoDocumentoDes AS TipoDocumentoDes,
       ec.EstadoCivilDes AS EstadoCivilDes,
       p.PaisDes AS PaisDes,
@@ -59,21 +64,41 @@ function colaborador_find(int $id): ?array
   return DB::fetchOne("SELECT * FROM colaboradores WHERE ColaboradorId = ? LIMIT 1", [$id]);
 }
 
-function colaborador_save(array $data, ?int $id): void
+/**
+ * Guarda y retorna el ID del colaborador (insert o update)
+ */
+function colaborador_save(array $data, ?int $id): int
 {
-  // Normalizaciones
   $activo = isset($data['Activo']) ? (int)$data['Activo'] : 1;
   $data['Activo'] = ($activo === 1) ? 1 : 0;
+
+  $data['BonificacionFamiliar'] = !empty($data['BonificacionFamiliar']) ? 1 : 0;
+  $data['Aguinaldo'] = isset($data['Aguinaldo']) ? ((int)$data['Aguinaldo'] === 1 ? 1 : 0) : 1;
 
   // Campos permitidos (whitelist)
   $cols = [
     'Legajo','Nombres','Apellidos',
-    'TipoDocumentoId','NroDocumento',
-    'EstadoCivilId','FechaNacimiento',
-    'Email','Telefono','Direccion',
+
+    'TipoDocumentoId','NroDocumento','RUC',
+
+    'EstadoCivilId','FechaNacimiento','GrupoSanguineo','VencimientoCI',
+
+    'Email','Telefono','TelefonoParticular','Direccion',
+
     'PaisId','DptoId','DistritoId','LocalidadId',
+
     'CargoId','AreaId','SectorId','TurnoId','TipoId',
-    'FormaPagoId','FechaIngreso',
+
+    'FormaPagoId','FechaIngreso','FechaEgreso',
+
+    'SalarioBase','PlusCargo','NroAseguradoIPS',
+
+    'BonificacionFamiliar','Aguinaldo',
+
+    'FotoSelfiePath','FotoCIFrentePath','FotoCIAtrasPath',
+
+    'Observacion',
+
     'Activo',
   ];
 
@@ -82,14 +107,26 @@ function colaborador_save(array $data, ?int $id): void
     $payload[$c] = $data[$c] ?? null;
   }
 
-  // Vacíos a NULL en IDs
+  // IDs vacíos => NULL
   foreach ($payload as $k => $v) {
     if (str_ends_with($k, 'Id') && ($v === '' || $v === null)) $payload[$k] = null;
   }
 
-  // Fechas vacías a NULL
-  foreach (['FechaNacimiento','FechaIngreso'] as $f) {
+  // Fechas vacías => NULL
+  foreach (['FechaNacimiento','VencimientoCI','FechaIngreso','FechaEgreso'] as $f) {
     if (($payload[$f] ?? '') === '') $payload[$f] = null;
+  }
+
+  // Normalizar money PYG: dejamos solo dígitos
+  foreach (['SalarioBase','PlusCargo'] as $m) {
+    $v = (string)($payload[$m] ?? '');
+    $v = preg_replace('/[^\d]/', '', $v ?? '');
+    $payload[$m] = ($v === '') ? null : $v;
+  }
+
+  // Normalizar texto corto
+  if (isset($payload['GrupoSanguineo']) && is_string($payload['GrupoSanguineo'])) {
+    $payload['GrupoSanguineo'] = strtoupper(trim($payload['GrupoSanguineo']));
   }
 
   if ($id && $id > 0) {
@@ -102,16 +139,19 @@ function colaborador_save(array $data, ?int $id): void
     $params[] = $id;
 
     DB::exec("UPDATE colaboradores SET " . implode(', ', $sets) . " WHERE ColaboradorId = ?", $params);
-  } else {
-    $colNames = array_keys($payload);
-    $ph = array_fill(0, count($colNames), '?');
-    $params = array_values($payload);
-
-    DB::exec(
-      "INSERT INTO colaboradores (`" . implode('`,`', $colNames) . "`) VALUES (" . implode(',', $ph) . ")",
-      $params
-    );
+    return $id;
   }
+
+  $colNames = array_keys($payload);
+  $ph = array_fill(0, count($colNames), '?');
+  $params = array_values($payload);
+
+  DB::exec(
+    "INSERT INTO colaboradores (`" . implode('`,`', $colNames) . "`) VALUES (" . implode(',', $ph) . ")",
+    $params
+  );
+
+  return (int)DB::lastId();
 }
 
 function colaborador_delete(int $id): void
@@ -120,13 +160,10 @@ function colaborador_delete(int $id): void
 }
 
 /** =========================
- * Helpers combos
+ * Combos genéricos
  * ========================= */
-
 function combo_list(string $table, string $idCol, string $desCol): array
 {
-  // si la tabla tiene Activo, filtramos; si no, igual lista
-  // (sin introspección, hacemos try-catch simple)
   try {
     return DB::fetchAll("SELECT `$idCol` AS id, `$desCol` AS des FROM `$table` WHERE `Activo`=1 ORDER BY `$desCol` ASC");
   } catch (Throwable $e) {
