@@ -72,60 +72,29 @@ final class Router
         return;
 
       case 'catalogos_post':
-        if (function_exists('catalogos_post')) {
-          catalogos_post();
-          return;
-        }
-        if (function_exists('catalogo_post')) {
-          catalogo_post();
-          return;
-        }
-
-        $base = __DIR__ . '/../../views/mantenimiento/';
-        if (is_file($base . 'catalogos_post.php')) {
-          View::render('mantenimiento/catalogos_post');
-          return;
-        }
+        if (function_exists('catalogos_post')) { catalogos_post(); return; }
+        if (function_exists('catalogo_post'))  { catalogo_post();  return; }
 
         redirect('index.php?r=catalogos&t=' . urlencode((string)($_POST['t'] ?? 'cargo')));
         return;
 
       // =========================
-      // IMPORTACIÓN MASIVA CSV (GEO)
-      // =========================
-      case 'import_geo':
-        View::render('mantenimiento/import_geo');
-        return;
-
-      case 'import_geo_post':
-        // handler (recomendado) para no mezclar lógica con vistas
-        $handler = __DIR__ . '/../handlers/import_geo_post.php';
-        if (is_file($handler)) {
-          require $handler;
-          return;
-        }
-        // fallback: si no existe handler, volvemos
-        $_SESSION['flash_error'] = 'Handler de importación no encontrado (app/handlers/import_geo_post.php).';
-        redirect('index.php?r=import_geo&t=' . urlencode((string)($_POST['t'] ?? 'departamento')));
-        return;
-
-      // =========================
       // LEGAJOS
       // =========================
+      // =========================
+
       case 'colaboradores':
         View::render('legajos/colaboradores');
         return;
-        
-        case 'colaboradores_post':
-          require __DIR__ . '/../handlers/colaboradores_post.php';
-          return;
-        
-        View::render('legajos/colaboradores_post');
-        return;
+
+      case 'colaboradores_post':
+        require __DIR__ . '/../handlers/colaboradores_post.php';
+      return;
 
       case 'contratos':
         View::render('legajos/contratos');
         return;
+      
 
       // =========================
       // MOVIMIENTOS
@@ -140,6 +109,19 @@ final class Router
 
       case 'mov_conceptos':
         View::render('movimientos/mov_conceptos');
+        return;
+
+      // ✅ Marcaciones reloj
+      case 'import_reloj':
+        View::render('movimientos/import_reloj');
+        return;
+
+      case 'import_reloj_post':
+        require __DIR__ . '/../handlers/import_reloj_post.php';
+        return;
+
+      case 'reconcile_reloj_post':
+        require __DIR__ . '/../handlers/reconcile_reloj_post.php';
         return;
 
       // =========================

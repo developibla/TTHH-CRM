@@ -99,6 +99,30 @@ body.modal-open{ overflow:hidden; }
 }
 .badge.off{ opacity:.7; }
 .small-help{ font-size:12px; color:var(--muted); margin-top:6px; }
+
+.searchbar .search-group{
+  display:flex;
+  align-items:stretch;
+  gap:8px;
+}
+.searchbar .search-input{ min-width:320px; max-width:520px; }
+.searchbar .search-btn{ display:flex; align-items:center; justify-content:center; }
+
+.preview-box{
+  margin-top:6px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.preview-img{
+  width:54px; height:54px;
+  border-radius:12px;
+  object-fit:cover;
+  border:1px solid var(--border);
+  background:#fff;
+}
+.preview-meta{ font-size:12px; color:var(--muted); }
+.preview-meta a{ font-weight:900; }
 </style>
 
 <div class="card">
@@ -111,22 +135,29 @@ body.modal-open{ overflow:hidden; }
     </div>
 
     <div class="tools">
-      <form method="get" action="index.php" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <form method="get" action="index.php" class="searchbar">
         <input type="hidden" name="r" value="colaboradores">
-        <input class="input" name="q" placeholder="Buscar (nombre, doc, legajo, email, ruc)..." value="<?= e($q) ?>"
-               style="min-width:340px;max-width:560px;">
-        <button class="btn btn-ico btn-outline" type="submit" title="Buscar">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
-          </svg>
-        </button>
-        <?php if ($q !== ''): ?>
-          <a class="btn btn-ico btn-outline" href="index.php?r=colaboradores" title="Limpiar">
+
+        <div class="search-group">
+          <input class="input search-input"
+                 name="q"
+                 placeholder="Buscar (nombre, doc, legajo, email, ruc, código reloj)..."
+                 value="<?= e($q) ?>">
+
+          <button class="btn btn-ico btn-outline search-btn" type="submit" title="Buscar">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
             </svg>
-          </a>
-        <?php endif; ?>
+          </button>
+
+          <?php if ($q !== ''): ?>
+            <a class="btn btn-ico btn-outline" href="index.php?r=colaboradores" title="Limpiar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </a>
+          <?php endif; ?>
+        </div>
       </form>
 
       <button class="btn btn-primary" type="button" data-colab-add title="Agregar colaborador">
@@ -153,6 +184,7 @@ body.modal-open{ overflow:hidden; }
           <th>Edad</th>
           <th>Doc</th>
           <th>RUC</th>
+          <th><b>Código Reloj</b></th>
           <th>IPS</th>
           <th>Salario Base</th>
           <th>Plus Cargo</th>
@@ -176,6 +208,7 @@ body.modal-open{ overflow:hidden; }
 
               'TipoDocumentoId' => (string)($row['TipoDocumentoId'] ?? ''),
               'NroDocumento' => (string)($row['NroDocumento'] ?? ''),
+              'CodigoReloj' => (string)($row['CodigoReloj'] ?? ''),
               'RUC' => (string)($row['RUC'] ?? ''),
 
               'EstadoCivilId' => (string)($row['EstadoCivilId'] ?? ''),
@@ -260,6 +293,7 @@ body.modal-open{ overflow:hidden; }
             <td><?= e((string)($rowObj['Edad'] ?? '')) ?></td>
             <td><?= e((string)($row['TipoDocumentoDes'] ?? '')) ?> <?= e((string)($row['NroDocumento'] ?? '')) ?></td>
             <td><?= e((string)($row['RUC'] ?? '')) ?></td>
+            <td style="font-weight:900;"><?= e((string)($row['CodigoReloj'] ?? '')) ?></td>
             <td><?= e((string)($row['NroAseguradoIPS'] ?? '')) ?></td>
             <td><?= e($fmtSb) ?></td>
             <td><?= e($fmtPc) ?></td>
@@ -304,6 +338,17 @@ body.modal-open{ overflow:hidden; }
           <div>
             <label class="label">Legajo</label>
             <input class="input" name="Legajo" data-uppercase="1">
+          </div>
+
+          <div>
+            <label class="label"><b>Código Reloj</b></label>
+            <input class="input" name="CodigoReloj" data-uppercase="1" placeholder="Ej: 4">
+            <div class="small-help">Código del reloj marcador para importación/reconciliación.</div>
+          </div>
+
+          <div>
+            <label class="label">Email</label>
+            <input class="input" type="email" name="Email">
           </div>
 
           <div>
@@ -387,11 +432,6 @@ body.modal-open{ overflow:hidden; }
               <option value="1" selected>Sí</option>
               <option value="0">No</option>
             </select>
-          </div>
-
-          <div>
-            <label class="label">Email</label>
-            <input class="input" type="email" name="Email">
           </div>
 
           <div>
@@ -545,19 +585,19 @@ body.modal-open{ overflow:hidden; }
           <div>
             <label class="label">Selfie</label>
             <input class="input" type="file" name="FotoSelfie" accept="image/*">
-            <div class="small-help" data-preview-selfie></div>
+            <div class="preview-box" data-preview-selfie></div>
           </div>
 
           <div>
             <label class="label">CI Frente</label>
             <input class="input" type="file" name="FotoCIFrente" accept="image/*">
-            <div class="small-help" data-preview-frente></div>
+            <div class="preview-box" data-preview-frente></div>
           </div>
 
           <div>
             <label class="label">CI Atrás</label>
             <input class="input" type="file" name="FotoCIAtras" accept="image/*">
-            <div class="small-help" data-preview-atras></div>
+            <div class="preview-box" data-preview-atras></div>
           </div>
 
           <div style="grid-column:1/-1;">
@@ -583,6 +623,10 @@ body.modal-open{ overflow:hidden; }
 
   if(!modal || !form) return;
 
+  const prevSelfie = form.querySelector('[data-preview-selfie]');
+  const prevFrente = form.querySelector('[data-preview-frente]');
+  const prevAtras  = form.querySelector('[data-preview-atras]');
+
   const open = () => { modal.classList.add('is-open'); document.body.classList.add('modal-open'); };
   const close = () => { modal.classList.remove('is-open'); document.body.classList.remove('modal-open'); };
 
@@ -604,14 +648,29 @@ body.modal-open{ overflow:hidden; }
     return (age >= 0 && age <= 120) ? String(age) : '';
   };
 
+  function renderPreview(container, url){
+    if(!container) return;
+    if(!url){
+      container.innerHTML = '<div class="preview-meta">Sin imagen.</div>';
+      return;
+    }
+    const safe = (url || '').toString();
+    container.innerHTML = `
+      <img class="preview-img" src="${safe}" alt="preview">
+      <div class="preview-meta">
+        Actual: <a href="${safe}" target="_blank" rel="noopener">ver</a>
+      </div>
+    `;
+  }
+
   const resetForm = () => {
     form.reset();
     form.querySelector('input[name="ColaboradorId"]').value = '';
     title.textContent = 'Colaboradores · Nuevo';
     form.querySelector('[data-age]').value = '';
-    form.querySelector('[data-preview-selfie]').textContent = '';
-    form.querySelector('[data-preview-frente]').textContent = '';
-    form.querySelector('[data-preview-atras]').textContent = '';
+    renderPreview(prevSelfie, '');
+    renderPreview(prevFrente, '');
+    renderPreview(prevAtras, '');
   };
 
   // Nuevo
@@ -640,12 +699,14 @@ body.modal-open{ overflow:hidden; }
       });
 
       // edad (readonly)
-      form.querySelector('[data-age]').value = calcAge(form.querySelector('[data-dob]').value);
+      const dob = form.querySelector('[data-dob]');
+      const age = form.querySelector('[data-age]');
+      if(dob && age) age.value = calcAge(dob.value);
 
-      // previews de fotos (si ya hay path guardado)
-      if (row.FotoSelfiePath) form.querySelector('[data-preview-selfie]').innerHTML = 'Actual: <a href="'+row.FotoSelfiePath+'" target="_blank">ver</a>';
-      if (row.FotoCIFrentePath) form.querySelector('[data-preview-frente]').innerHTML = 'Actual: <a href="'+row.FotoCIFrentePath+'" target="_blank">ver</a>';
-      if (row.FotoCIAtrasPath) form.querySelector('[data-preview-atras]').innerHTML = 'Actual: <a href="'+row.FotoCIAtrasPath+'" target="_blank">ver</a>';
+      // previews
+      renderPreview(prevSelfie, row.FotoSelfiePath || '');
+      renderPreview(prevFrente, row.FotoCIFrentePath || '');
+      renderPreview(prevAtras,  row.FotoCIAtrasPath  || '');
 
       // money visual
       form.querySelectorAll('[data-money]').forEach(inp=>{
@@ -686,6 +747,25 @@ body.modal-open{ overflow:hidden; }
   document.addEventListener('keydown', (ev)=>{
     if(ev.key === 'Escape' && modal.classList.contains('is-open')) close();
   });
+
+  // al elegir un archivo nuevo, mostrar preview instantáneo
+  function bindLocalPreview(inputName, container){
+    const inp = form.querySelector(`input[name="${inputName}"]`);
+    if(!inp || !container) return;
+    inp.addEventListener('change', ()=>{
+      const f = inp.files && inp.files[0] ? inp.files[0] : null;
+      if(!f){ return; }
+      const url = URL.createObjectURL(f);
+      container.innerHTML = `
+        <img class="preview-img" src="${url}" alt="preview">
+        <div class="preview-meta">Nueva selección: ${f.name}</div>
+      `;
+    });
+  }
+  bindLocalPreview('FotoSelfie', prevSelfie);
+  bindLocalPreview('FotoCIFrente', prevFrente);
+  bindLocalPreview('FotoCIAtras', prevAtras);
+
 })();
 </script>
 
