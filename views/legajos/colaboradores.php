@@ -97,32 +97,28 @@ body.modal-open{ overflow:hidden; }
   background: rgba(15,42,28,.02);
   font-size:12px; font-weight:900;
 }
-.badge.off{ opacity:.7; }
 .small-help{ font-size:12px; color:var(--muted); margin-top:6px; }
 
-.searchbar .search-group{
-  display:flex;
-  align-items:stretch;
-  gap:8px;
-}
-.searchbar .search-input{ min-width:320px; max-width:520px; }
-.searchbar .search-btn{ display:flex; align-items:center; justify-content:center; }
-
-.preview-box{
-  margin-top:6px;
+/* miniaturas */
+.thumb{
+  margin-top:8px;
   display:flex;
   align-items:center;
   gap:10px;
 }
-.preview-img{
-  width:54px; height:54px;
-  border-radius:12px;
+.thumb img{
+  width:54px;
+  height:54px;
+  border-radius:10px;
   object-fit:cover;
   border:1px solid var(--border);
   background:#fff;
 }
-.preview-meta{ font-size:12px; color:var(--muted); }
-.preview-meta a{ font-weight:900; }
+.thumb a{
+  font-size:12px;
+  font-weight:900;
+  color: var(--primary-2);
+}
 </style>
 
 <div class="card">
@@ -137,13 +133,11 @@ body.modal-open{ overflow:hidden; }
     <div class="tools">
       <form method="get" action="index.php" class="searchbar">
         <input type="hidden" name="r" value="colaboradores">
-
         <div class="search-group">
           <input class="input search-input"
-                 name="q"
-                 placeholder="Buscar (nombre, doc, legajo, email, ruc, código reloj)..."
-                 value="<?= e($q) ?>">
-
+                name="q"
+                placeholder="Buscar (nombre, doc, legajo, email, ruc)..."
+                value="<?= e($q) ?>">
           <button class="btn btn-ico btn-outline search-btn" type="submit" title="Buscar">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
@@ -184,7 +178,7 @@ body.modal-open{ overflow:hidden; }
           <th>Edad</th>
           <th>Doc</th>
           <th>RUC</th>
-          <th><b>Código Reloj</b></th>
+          <th>Código Reloj</th>
           <th>IPS</th>
           <th>Salario Base</th>
           <th>Plus Cargo</th>
@@ -208,7 +202,7 @@ body.modal-open{ overflow:hidden; }
 
               'TipoDocumentoId' => (string)($row['TipoDocumentoId'] ?? ''),
               'NroDocumento' => (string)($row['NroDocumento'] ?? ''),
-              'CodigoReloj' => (string)($row['CodigoReloj'] ?? ''),
+              'CodigoReloj' => (string)($row['CodigoReloj'] ?? ''), // ✅ IMPORTANTE
               'RUC' => (string)($row['RUC'] ?? ''),
 
               'EstadoCivilId' => (string)($row['EstadoCivilId'] ?? ''),
@@ -293,7 +287,7 @@ body.modal-open{ overflow:hidden; }
             <td><?= e((string)($rowObj['Edad'] ?? '')) ?></td>
             <td><?= e((string)($row['TipoDocumentoDes'] ?? '')) ?> <?= e((string)($row['NroDocumento'] ?? '')) ?></td>
             <td><?= e((string)($row['RUC'] ?? '')) ?></td>
-            <td style="font-weight:900;"><?= e((string)($row['CodigoReloj'] ?? '')) ?></td>
+            <td><?= e((string)($row['CodigoReloj'] ?? '')) ?></td>
             <td><?= e((string)($row['NroAseguradoIPS'] ?? '')) ?></td>
             <td><?= e($fmtSb) ?></td>
             <td><?= e($fmtPc) ?></td>
@@ -341,17 +335,6 @@ body.modal-open{ overflow:hidden; }
           </div>
 
           <div>
-            <label class="label"><b>Código Reloj</b></label>
-            <input class="input" name="CodigoReloj" data-uppercase="1" placeholder="Ej: 4">
-            <div class="small-help">Código del reloj marcador para importación/reconciliación.</div>
-          </div>
-
-          <div>
-            <label class="label">Email</label>
-            <input class="input" type="email" name="Email">
-          </div>
-
-          <div>
             <label class="label">Apellidos *</label>
             <input class="input" name="Apellidos" required data-uppercase="1" data-focus-first="1">
           </div>
@@ -381,6 +364,13 @@ body.modal-open{ overflow:hidden; }
             <input class="input" name="RUC" data-uppercase="1">
           </div>
 
+          <!-- ✅ NUEVO: Código reloj -->
+          <div>
+            <label class="label">Código Reloj</label>
+            <input class="input" name="CodigoReloj" placeholder="Ej: 4" data-uppercase="1">
+            <div class="small-help">Debe coincidir con el ID del reloj (CSV).</div>
+          </div>
+
           <div>
             <label class="label">Fecha nacimiento</label>
             <input class="input" type="date" name="FechaNacimiento" data-dob>
@@ -394,8 +384,7 @@ body.modal-open{ overflow:hidden; }
 
           <div>
             <label class="label">Grupo sanguíneo</label>
-            <input class="input" name="GrupoSanguineo" placeholder="Ej: O+ / A-"
-                   data-uppercase="1">
+            <input class="input" name="GrupoSanguineo" placeholder="Ej: O+ / A-" data-uppercase="1">
           </div>
 
           <div>
@@ -432,6 +421,11 @@ body.modal-open{ overflow:hidden; }
               <option value="1" selected>Sí</option>
               <option value="0">No</option>
             </select>
+          </div>
+
+          <div>
+            <label class="label">Email</label>
+            <input class="input" type="email" name="Email">
           </div>
 
           <div>
@@ -585,19 +579,19 @@ body.modal-open{ overflow:hidden; }
           <div>
             <label class="label">Selfie</label>
             <input class="input" type="file" name="FotoSelfie" accept="image/*">
-            <div class="preview-box" data-preview-selfie></div>
+            <div class="thumb" data-preview-selfie></div>
           </div>
 
           <div>
             <label class="label">CI Frente</label>
             <input class="input" type="file" name="FotoCIFrente" accept="image/*">
-            <div class="preview-box" data-preview-frente></div>
+            <div class="thumb" data-preview-frente></div>
           </div>
 
           <div>
             <label class="label">CI Atrás</label>
             <input class="input" type="file" name="FotoCIAtras" accept="image/*">
-            <div class="preview-box" data-preview-atras></div>
+            <div class="thumb" data-preview-atras></div>
           </div>
 
           <div style="grid-column:1/-1;">
@@ -623,10 +617,6 @@ body.modal-open{ overflow:hidden; }
 
   if(!modal || !form) return;
 
-  const prevSelfie = form.querySelector('[data-preview-selfie]');
-  const prevFrente = form.querySelector('[data-preview-frente]');
-  const prevAtras  = form.querySelector('[data-preview-atras]');
-
   const open = () => { modal.classList.add('is-open'); document.body.classList.add('modal-open'); };
   const close = () => { modal.classList.remove('is-open'); document.body.classList.remove('modal-open'); };
 
@@ -648,29 +638,30 @@ body.modal-open{ overflow:hidden; }
     return (age >= 0 && age <= 120) ? String(age) : '';
   };
 
-  function renderPreview(container, url){
+  const pvSelfie = form.querySelector('[data-preview-selfie]');
+  const pvFrente = form.querySelector('[data-preview-frente]');
+  const pvAtras  = form.querySelector('[data-preview-atras]');
+
+  const setThumb = (container, path) => {
     if(!container) return;
-    if(!url){
-      container.innerHTML = '<div class="preview-meta">Sin imagen.</div>';
+    if(!path){
+      container.innerHTML = '';
       return;
     }
-    const safe = (url || '').toString();
-    container.innerHTML = `
-      <img class="preview-img" src="${safe}" alt="preview">
-      <div class="preview-meta">
-        Actual: <a href="${safe}" target="_blank" rel="noopener">ver</a>
-      </div>
-    `;
-  }
+    const safe = String(path).replace(/"/g,'&quot;');
+    container.innerHTML =
+      '<img src="'+ safe +'" alt="Imagen">' +
+      '<a href="'+ safe +'" target="_blank" rel="noopener">Ver</a>';
+  };
 
   const resetForm = () => {
     form.reset();
     form.querySelector('input[name="ColaboradorId"]').value = '';
     title.textContent = 'Colaboradores · Nuevo';
     form.querySelector('[data-age]').value = '';
-    renderPreview(prevSelfie, '');
-    renderPreview(prevFrente, '');
-    renderPreview(prevAtras, '');
+    setThumb(pvSelfie, '');
+    setThumb(pvFrente, '');
+    setThumb(pvAtras, '');
   };
 
   // Nuevo
@@ -691,7 +682,6 @@ body.modal-open{ overflow:hidden; }
       const row = JSON.parse(a.getAttribute('data-row') || '{}');
       title.textContent = 'Colaboradores · Editar #' + (row.ColaboradorId || '');
 
-      // set values (inputs/selects/textarea)
       Object.keys(row).forEach(k=>{
         const el = form.querySelector(`[name="${k}"]`);
         if(!el) return;
@@ -699,19 +689,17 @@ body.modal-open{ overflow:hidden; }
       });
 
       // edad (readonly)
-      const dob = form.querySelector('[data-dob]');
-      const age = form.querySelector('[data-age]');
-      if(dob && age) age.value = calcAge(dob.value);
-
-      // previews
-      renderPreview(prevSelfie, row.FotoSelfiePath || '');
-      renderPreview(prevFrente, row.FotoCIFrentePath || '');
-      renderPreview(prevAtras,  row.FotoCIAtrasPath  || '');
+      form.querySelector('[data-age]').value = calcAge(form.querySelector('[data-dob]').value);
 
       // money visual
       form.querySelectorAll('[data-money]').forEach(inp=>{
         inp.value = formatPYG(inp.value);
       });
+
+      // ✅ miniaturas reales
+      setThumb(pvSelfie, row.FotoSelfiePath || '');
+      setThumb(pvFrente, row.FotoCIFrentePath || '');
+      setThumb(pvAtras,  row.FotoCIAtrasPath || '');
 
       open();
       const first = form.querySelector('[data-focus-first="1"]');
@@ -747,25 +735,6 @@ body.modal-open{ overflow:hidden; }
   document.addEventListener('keydown', (ev)=>{
     if(ev.key === 'Escape' && modal.classList.contains('is-open')) close();
   });
-
-  // al elegir un archivo nuevo, mostrar preview instantáneo
-  function bindLocalPreview(inputName, container){
-    const inp = form.querySelector(`input[name="${inputName}"]`);
-    if(!inp || !container) return;
-    inp.addEventListener('change', ()=>{
-      const f = inp.files && inp.files[0] ? inp.files[0] : null;
-      if(!f){ return; }
-      const url = URL.createObjectURL(f);
-      container.innerHTML = `
-        <img class="preview-img" src="${url}" alt="preview">
-        <div class="preview-meta">Nueva selección: ${f.name}</div>
-      `;
-    });
-  }
-  bindLocalPreview('FotoSelfie', prevSelfie);
-  bindLocalPreview('FotoCIFrente', prevFrente);
-  bindLocalPreview('FotoCIAtras', prevAtras);
-
 })();
 </script>
 

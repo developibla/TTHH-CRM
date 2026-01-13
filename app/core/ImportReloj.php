@@ -42,7 +42,7 @@ function import_reloj_csv(string $csvPath, string $sourceName = ''): array
     // Insert en movimientos
     $stInsert = $pdo->prepare("
       INSERT INTO reloj_movimientos
-        (CodigoReloj, ColaboradorId, FechaHora, DispositivoNro, TipoRegistro, FuenteArchivo)
+        (CodigoReloj, ColaboradorId, FechaHora, Dispositivo, TipoEvento, FuenteArchivo)
       VALUES
         (?, ?, ?, ?, ?, ?)
     ");

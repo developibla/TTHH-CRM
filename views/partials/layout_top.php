@@ -59,9 +59,9 @@ $cp = company_params();
   <div class="sidebar-overlay" data-sidebar-overlay></div>
 
   <div class="shell">
-    <aside class="sidebar">
-      <!-- Botón cerrar solo en mobile (opcional) -->
-      <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+    <aside class="sidebar" data-sidebar>
+      <!-- Botón cerrar solo en mobile -->
+      <div class="sidebar-close-row">
         <button class="btn-icon" type="button" data-close-sidebar title="Cerrar menú">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
@@ -73,3 +73,120 @@ $cp = company_params();
     </aside>
 
     <main class="content">
+
+<script>
+(function(){
+  const body = document.body;
+  const btnToggle = document.querySelector('[data-toggle-sidebar]');
+  const btnClose  = document.querySelector('[data-close-sidebar]');
+  const overlay   = document.querySelector('[data-sidebar-overlay]');
+  const sidebar   = document.querySelector('[data-sidebar]');
+  const navRoot   = document.querySelector('[data-accordion-root]');
+
+  if (!btnToggle || !overlay || !sidebar) return;
+
+  const isMobile = () => window.matchMedia('(max-width: 980px)').matches;
+
+  const openSidebar = () => {
+    body.classList.add('sidebar-open');
+    overlay.style.display = 'block';
+  };
+
+  const closeSidebar = () => {
+    body.classList.remove('sidebar-open');
+    overlay.style.display = 'none';
+  };
+
+  // ✅ Toggle: mobile abre/cierra drawer, desktop colapsa/expande
+  btnToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (isMobile()) {
+      body.classList.contains('sidebar-open') ? closeSidebar() : openSidebar();
+    } else {
+      body.classList.toggle('sidebar-collapsed');
+    }
+  });
+
+  btnClose?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeSidebar();
+  });
+
+  overlay.addEventListener('click', closeSidebar);
+
+  // ESC para cerrar drawer
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && body.classList.contains('sidebar-open')) closeSidebar();
+  });
+
+  // ✅ Mobile: al cambiar a desktop, limpiar drawer
+  window.addEventListener('resize', () => {
+    if (!isMobile()) {
+      closeSidebar();
+    }
+  });
+
+  // ===========================
+  // Accordion (sidebar)
+  // ===========================
+  if (navRoot) {
+    const openKey = navRoot.getAttribute('data-open-key') || '';
+    const buttons = Array.from(navRoot.querySelectorAll('button[data-acc]'));
+
+    function setPanel(btn, open) {
+      const key = btn.getAttribute('data-acc');
+      const panel = btn.nextElementSibling;
+      if (!panel || !panel.classList.contains('panel')) return;
+
+      btn.classList.toggle('active', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      panel.style.display = open ? 'block' : 'none';
+
+      if (open && key) navRoot.setAttribute('data-open-key', key);
+    }
+
+    // Asegurar que el panel “openKey” quede abierto
+    buttons.forEach(btn => {
+      const k = btn.getAttribute('data-acc') || '';
+      setPanel(btn, k === openKey);
+    });
+
+    // Click en headers del acordeón
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const isOpen = btn.classList.contains('active');
+
+        // cerrar otros
+        buttons.forEach(other => {
+          if (other !== btn) setPanel(other, false);
+        });
+
+        // toggle actual
+        setPanel(btn, !isOpen);
+      });
+    });
+
+    // En mobile, al clickear un item del menú, cerramos drawer
+    navRoot.querySelectorAll('.panel a').forEach(a => {
+      a.addEventListener('click', () => {
+        if (isMobile()) closeSidebar();
+      });
+    });
+  }
+
+})();
+</script>
+
+<style>
+/* ✅ solo para el botón cerrar arriba del sidebar */
+.sidebar-close-row{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:6px;
+}
+
+/* En desktop, ocultar el botón “X” (no hace falta) */
+@media (min-width: 981px){
+  .sidebar-close-row{ display:none; }
+}
+</style>

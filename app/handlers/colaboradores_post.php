@@ -57,12 +57,7 @@ function upload_colab_image(string $field, int $colabId): ?string
     throw new RuntimeException("No se pudo mover el archivo ($field).");
   }
 
-  // path relativo (para servir desde web)
   return 'public/uploads/colaboradores/' . $baseName;
-}
-
-function only_digits(string $v): string {
-  return preg_replace('/[^\d]/', '', $v) ?? '';
 }
 
 $id = isset($_POST['ColaboradorId']) ? (int)$_POST['ColaboradorId'] : 0;
@@ -80,9 +75,6 @@ if (!empty($_POST['delete_id'])) {
 }
 
 // data
-$salarioBase = only_digits((string)($_POST['SalarioBase'] ?? ''));
-$plusCargo   = only_digits((string)($_POST['PlusCargo'] ?? ''));
-
 $data = [
   'Legajo' => trim((string)($_POST['Legajo'] ?? '')),
   'Nombres' => trim((string)($_POST['Nombres'] ?? '')),
@@ -90,7 +82,7 @@ $data = [
 
   'TipoDocumentoId' => (string)($_POST['TipoDocumentoId'] ?? ''),
   'NroDocumento' => trim((string)($_POST['NroDocumento'] ?? '')),
-  'CodigoReloj' => trim((string)($_POST['CodigoReloj'] ?? '')), // ✅ NUEVO
+  'CodigoReloj' => trim((string)($_POST['CodigoReloj'] ?? '')), // ✅ NUEVO: guardar
   'RUC' => trim((string)($_POST['RUC'] ?? '')),
 
   'EstadoCivilId' => (string)($_POST['EstadoCivilId'] ?? ''),
@@ -118,8 +110,8 @@ $data = [
   'FechaIngreso' => (string)($_POST['FechaIngreso'] ?? ''),
   'FechaEgreso' => (string)($_POST['FechaEgreso'] ?? ''),
 
-  'SalarioBase' => $salarioBase === '' ? '' : $salarioBase, // ✅ limpio miles
-  'PlusCargo' => $plusCargo === '' ? '' : $plusCargo,       // ✅ limpio miles
+  'SalarioBase' => (string)($_POST['SalarioBase'] ?? ''),
+  'PlusCargo' => (string)($_POST['PlusCargo'] ?? ''),
   'NroAseguradoIPS' => trim((string)($_POST['NroAseguradoIPS'] ?? '')),
 
   'BonificacionFamiliar' => (string)($_POST['BonificacionFamiliar'] ?? '0'),
@@ -164,13 +156,7 @@ try {
 
   $_SESSION['flash_ok'] = ($id > 0) ? 'Colaborador actualizado.' : 'Colaborador agregado.';
 } catch (Throwable $e) {
-  // mensaje amigable si el CódigoReloj es único y se repite
-  $msg = $e->getMessage();
-  if (stripos($msg, 'uk_colab_codigo_reloj') !== false || stripos($msg, 'Duplicate entry') !== false) {
-    $_SESSION['flash_error'] = 'El Código Reloj ya está asignado a otro colaborador.';
-  } else {
-    $_SESSION['flash_error'] = 'Error al guardar: ' . $msg;
-  }
+  $_SESSION['flash_error'] = 'Error al guardar: ' . $e->getMessage();
 }
 
 redirect('index.php?r=colaboradores');

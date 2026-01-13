@@ -1,109 +1,73 @@
-/* public/assets/js/app.js */
 (function () {
-  "use strict";
+  const body = document.body;
 
-  function qs(sel, root) { return (root || document).querySelector(sel); }
-  function qsa(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
+  const btnToggle = document.querySelector('[data-toggle-sidebar]');
+  const btnClose  = document.querySelector('[data-close-sidebar]');
+  const overlay   = document.querySelector('[data-sidebar-overlay]');
 
-  // =========================
-  // SIDEBAR: toggle colapsar + overlay mobile
-  // =========================
-  function initSidebarShell() {
-    const btnToggle = qs('[data-toggle-sidebar]');
-    const btnClose = qs('[data-close-sidebar]');
-    const overlay = qs('[data-sidebar-overlay]');
-    const sidebar = qs('.sidebar');
+  // Mobile: open/close drawer
+  function openMobile() { body.classList.add('sidebar-open'); }
+  function closeMobile() { body.classList.remove('sidebar-open'); }
 
-    function openMobile() {
-      document.body.classList.add('sidebar-open');
-      document.body.classList.remove('sidebar-collapsed'); // en mobile no colapsamos, abrimos
-    }
-    function closeMobile() {
-      document.body.classList.remove('sidebar-open');
-    }
-    function toggleDesktopCollapse() {
-      document.body.classList.toggle('sidebar-collapsed');
-      // si colapsa, cerramos paneles (estético)
-      if (document.body.classList.contains('sidebar-collapsed')) {
-        qsa('.sidebar .accordion').forEach(b => b.classList.remove('active'));
-        qsa('.sidebar .panel').forEach(p => p.style.display = 'none');
-      }
-    }
+  // Desktop: collapse/expand sidebar
+  function toggleDesktopCollapse() { body.classList.toggle('sidebar-collapsed'); }
 
-    if (btnToggle) {
-      btnToggle.addEventListener('click', function () {
-        // en pantallas chicas abrimos overlay
-        if (window.matchMedia('(max-width: 980px)').matches) openMobile();
-        else toggleDesktopCollapse();
-      });
-    }
-    if (btnClose) btnClose.addEventListener('click', closeMobile);
-    if (overlay) overlay.addEventListener('click', closeMobile);
-
-    // si se agranda la pantalla, cerramos overlay
-    window.addEventListener('resize', function () {
-      if (!window.matchMedia('(max-width: 980px)').matches) closeMobile();
-    });
-
-    // si no hay sidebar, no hacemos nada
-    if (!sidebar) return;
+  function isMobile() {
+    return window.matchMedia('(max-width: 980px)').matches;
   }
 
-  // =========================
-  // ACCORDION: 1 abierto a la vez
-  // =========================
-  function initAccordion() {
-    const sidebar = qs('.sidebar');
-    if (!sidebar) return;
+  function toggleSidebar() {
+    if (isMobile()) {
+      body.classList.contains('sidebar-open') ? closeMobile() : openMobile();
+    } else {
+      toggleDesktopCollapse();
+    }
+  }
 
-    sidebar.addEventListener('click', function (ev) {
-      const btn = ev.target.closest('.accordion');
-      if (!btn) return;
+  btnToggle?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleSidebar();
+  });
 
-      // si está colapsado en desktop, no abrir paneles
-      if (document.body.classList.contains('sidebar-collapsed')) return;
+  btnClose?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeMobile();
+  });
 
-      const all = qsa('.sidebar .accordion');
-      const panels = qsa('.sidebar .panel');
+  overlay?.addEventListener('click', closeMobile);
+
+  // Esc cierra drawer en mobile
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMobile();
+  });
+
+  // Si cambia a desktop, quitamos sidebar-open (para que no quede “enganchado”)
+  window.addEventListener('resize', () => {
+    if (!isMobile()) closeMobile();
+  });
+
+  // ===== Accordion: 1 abierto a la vez =====
+  const accs = document.querySelectorAll('.sidebar .accordion');
+  accs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // En desktop colapsado no abrimos paneles
+      if (!isMobile() && body.classList.contains('sidebar-collapsed')) return;
 
       // cerrar otros
-      all.forEach(b => {
-        if (b !== btn) b.classList.remove('active');
-      });
-      panels.forEach(p => {
-        // panel asociado es el nextElementSibling del botón
-        const owner = p.previousElementSibling;
-        if (owner !== btn) p.style.display = 'none';
+      accs.forEach((b) => {
+        if (b !== btn) {
+          b.classList.remove('active');
+          const p = b.nextElementSibling;
+          if (p && p.classList.contains('panel')) p.style.display = 'none';
+        }
       });
 
       // toggle actual
       btn.classList.toggle('active');
       const panel = btn.nextElementSibling;
-      if (panel && panel.classList.contains('panel')) {
-        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-      }
+      if (!panel || !panel.classList.contains('panel')) return;
+
+      panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
     });
-  }
-
-  // =========================
-  // INPUT: UPPERCASE ON BLUR (global)
-  // =========================
-  function initUppercase() {
-    document.addEventListener('blur', function (ev) {
-      const el = ev.target;
-      if (!el) return;
-      if (el.matches && el.matches('[data-uppercase="1"]')) {
-        el.value = (el.value || '').toString().toUpperCase();
-      }
-    }, true);
-  }
-
-  // =========================
-  // BOOT
-  // =========================
-  document.addEventListener('DOMContentLoaded', function () {
-    initSidebarShell();
-    initAccordion();
-    initUppercase();
   });
 })();
